@@ -1,0 +1,17 @@
+# Sensitive config files
+**/config.json
+
+# Logs
+**/logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+*.iml
+.idea/
+.vscode/
+
+# Local settings
+settings.local.json
