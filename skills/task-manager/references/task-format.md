@@ -87,9 +87,9 @@ completed: YYYY-MM-DD  (완료 시 추가)
 
 ```
 /brief 시:
-1. Glob queue/pending/*.md
+1. Glob active/*/pending/*.md
 2. blocked_by가 있는 파일만 Read
-3. blocked_by 파일이 completed/에 있는지 Glob으로 확인
+3. blocked_by 파일이 active/*/completed/에 있는지 Glob으로 확인
 4. 없으면 blocked → 건너뜀
 5. 있으면 unblocked → 실행 가능
 ```

@@ -56,7 +56,7 @@
 ## 자동 판단 플로우
 
 ```
-1. Glob queue/pending/*.md 에서 태스크 파일 목록 수집
+1. Glob active/*/pending/*.md 에서 태스크 파일 목록 수집
 2. blocked_by 확인 → unblocked 태스크 필터링
 3. 도메인/파일 겹침 여부 확인
 4. 티어 판단

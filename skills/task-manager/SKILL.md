@@ -6,15 +6,16 @@ description: |
   새 프로젝트 시작 시 로드맵 설정, "다음 뭐해", "어디까지 했지", "이어서",
   "계속해줘", "뭐 남았어", "상태 확인", "브리핑" 같은 요청 시 반드시 이 스킬 사용.
   .claude/tasks/ 디렉토리가 있는 프로젝트에서 작업할 때 항상 참조.
+  사용하지 않는 경우: 1회성 단순 작업(5분 이내, 단일 파일), 질문/조사(코드 변경 없음), 독립적 핫픽스.
 ---
 
 # 태스크 매니저
 
 **디렉토리 구조가 태스크 상태의 단일 진실 공급원(SSOT).**
 
-- `queue/pending/` — 대기 중
-- `queue/in_progress/` — 작업 중
-- `queue/completed/` — 완료
+- `active/{로드맵}/pending/` — 대기 중
+- `active/{로드맵}/in_progress/` — 작업 중
+- `active/{로드맵}/completed/` — 완료
 
 ## 사용하지 않는 경우
 
@@ -28,37 +29,55 @@ description: |
 
 ```
 .claude/
-├── CLAUDE.md                         # 프로젝트 컨텍스트
+├── CLAUDE.md                              # 프로젝트 컨텍스트
 └── tasks/
-    ├── SPEC.md                       # 요구사항 명세 (승인 필수)
-    ├── ROADMAP.md                    # Phase 개요
-    ├── queue/
-    │   ├── pending/
-    │   ├── in_progress/
-    │   └── completed/
-    └── archive/
-        └── roadmap-v1/
-            ├── SPEC.md               # 아카이빙 시 함께 이동
-            ├── roadmap.md
-            └── phase-xxx.md
+    ├── active/                            # 진행 중인 로드맵 (여러 개 가능)
+    │   └── h2-migration/
+    │       ├── PLAN.md                    # 요구사항 + Phase 구조 통합
+    │       ├── pending/
+    │       ├── in_progress/
+    │       └── completed/
+    └── completed/                         # 완료된 로드맵
+        └── some-old-work/
+            ├── PLAN.md
+            └── ...
 ```
-
-시작하기: `references/getting-started.md`
 
 ---
 
-## 스펙 정의 (태스크 생성 전 필수)
+## PLAN 정의 (태스크 생성 전 필수)
 
-새 프로젝트 또는 새 로드맵 시작 시:
+새 로드맵 시작 시:
 
 1. 인터뷰 (최소 3라운드)    → 요구사항 구체화
-2. SPEC.md 작성            → 사용자 승인 필수
-3. AC → 태스크 분해        → pending/에 생성
+2. PLAN.md 작성             → 사용자 승인 필수
+3. AC → 태스크 분해         → pending/에 생성
 
-**SPEC.md 승인 없이 태스크 생성 금지.**
+**PLAN.md 승인 없이 태스크 생성 금지.**
+
+### PLAN.md 포맷
+
+```markdown
+# {로드맵 이름}
+
+## 배경
+(왜 하는지, 제약조건)
+
+## 요구사항
+- R1. ...
+- R2. ...
+
+## Phase 1: {이름}
+- R1 관련 태스크들
+
+## Phase 2: {이름}
+- R2 관련 태스크들
+
+## 범위 밖
+- ...
+```
 
 인터뷰 프레임워크: `references/interview-framework.md`
-계획 프로토콜: `references/planning-protocol.md`
 
 ---
 
@@ -88,15 +107,30 @@ description: |
 
 ## AI 행동 규칙 (반드시 준수)
 
-### 0. 스펙 인터뷰 (새 프로젝트/로드맵 시작 시)
+### 0. PLAN 인터뷰 (새 로드맵 시작 시)
 
-1. 본질(Essence) 질문으로 시작 → 최소 3라운드 적응적 질문
-2. 라운드 사이에 코드베이스 탐색 (Glob/Read)으로 맥락 파악
-3. 인터뷰 완료 → SPEC.md 초안 작성 → 사용자 승인 대기
-4. 승인 후 AC를 태스크로 분해 → ROADMAP.md → pending/에 생성
-5. **승인 없이 태스크 생성 금지. 1회성 작업이면 생략.**
+1. **`EnterPlanMode`로 Plan Mode에 진입한다** — Plan Mode에서는 코드 수정이 불가능하므로, 성급한 구현을 구조적으로 차단한다.
+2. **`AskUserQuestion` 도구로 질문한다** — 일반 텍스트 출력이 아닌 도구를 사용해야 사용자의 응답을 확실히 대기할 수 있다. 인터뷰 중 모든 질문은 이 도구를 통해 한다.
+3. 본질(Essence) 질문으로 시작 → **최소 3라운드** 적응적 질문. 3라운드 미만으로 끝내지 않는다.
+4. 라운드 사이에 코드베이스 탐색 (Glob/Read)으로 맥락 파악 — 질문의 근거를 코드에서 찾아 구체적으로 질문
+5. 인터뷰 완료 → PLAN.md 초안을 대화에 제시 → 사용자 승인 대기
+6. **승인 후 `ExitPlanMode`로 Plan Mode를 해제한다**
+7. PLAN.md 파일 저장 → AC를 태스크로 분해 → `active/{로드맵}/pending/`에 생성
+8. **승인 없이 태스크 생성 금지. 1회성 작업이면 생략.**
 
-상세: `references/planning-protocol.md`, `references/interview-framework.md`
+```
+EnterPlanMode → AskUserQuestion 인터뷰 (3라운드+) → PLAN.md 초안 제시 → 승인 → ExitPlanMode → 파일 저장 + 태스크 분해
+```
+
+상세: `references/interview-framework.md`
+
+### 0.5. 계획이 이미 있는 경우
+
+사용자가 이미 작성한 계획이나 플랜 모드에서 나온 계획이 있을 때:
+
+1. **반드시 태스크 파일로 분해한 후 실행한다** — 계획이 있다고 태스크 분해를 건너뛰지 않는다
+2. 계획을 PLAN.md로 옮기고 → 태스크 분해 → pending/에 생성
+3. 이후 정상 워크플로우 진행 (태스크 시작 → 구현 → 검증 → 완료)
 
 ### 1. 태스크 시작
 
@@ -106,29 +140,23 @@ description: |
 
 ### 2. 태스크 완료
 
-1. `/verify`를 실행하여 요구사항 대비 검증 (필수)
-2. PASS 후 `completed/`로 이동, 파일 하단에 완료일 기록
-3. FAIL 시: 1차 자동 수정 → 재검증, 2차 실패 시 사용자에게 원인과 대안 제시 (3회 이상 자동 재시도 금지)
-4. 해당 Phase 전체 완료 시 → 섹션 3 아카이빙 즉시 실행
+1. `/verify`를 **자동 실행**하여 요구사항 대비 검증 (필수, 사용자 지시 불필요)
+2. PASS → 자동 커밋 → `completed/`로 이동, 파일 하단에 완료일 기록
+3. FAIL → 수정 → 재검증 (진전이 있는 한 계속 시도)
+   - 같은 항목이 연속 2회 동일 원인으로 FAIL → 접근 방식 변경 후 재시도
+   - 같은 항목이 3회 연속 FAIL → 해당 항목만 사용자에게 보고
+   - 전체 검증 사이클 5회 초과 → 중단하고 현황 보고
+4. **즉시 다음 태스크 시작** (pending/에 남은 게 있으면)
 
-### 3. Phase 아카이빙
+### 3. 로드맵 완료
 
-Phase의 모든 태스크가 `completed/`에 있을 때 (단일 세션에서 실행):
+모든 태스크가 `completed/`에 있을 때:
 
-1. `completed/`의 해당 Phase 파일들을 `archive/roadmap-v{N}/phase-{name}.md`로 요약 병합
-2. `completed/`에서 해당 파일들 삭제
-3. ROADMAP.md에서 해당 Phase에 ✅ 표시
+1. PLAN.md에 모든 Phase에 ✅ 표시
+2. `active/{로드맵}/` 폴더를 `completed/{로드맵}/`으로 이동
+3. 자동으로 새 로드맵을 만들지 않음 — 사용자 입력 대기
 
-### 4. 로드맵 아카이빙
-
-모든 Phase가 ✅일 때 (단일 세션에서 실행):
-
-1. SPEC.md를 `archive/roadmap-v{N}/SPEC.md`로 복사 후 삭제
-2. ROADMAP.md를 `archive/roadmap-v{N}/roadmap.md`로 복사
-3. 새 ROADMAP.md 생성 (이전 로드맵 링크 포함)
-4. 자동으로 새 Phase를 만들지 않음 — 사용자 입력 대기
-
-### 5. 태스크 시작 전 접근 방식 확인
+### 4. 태스크 시작 전 접근 방식 확인
 
 - S 태스크: "이 메서드를 수정하면 될 것 같은데, 진행할까요?" 수준
 - M 태스크: 관련 코드 탐색 → 접근법 제시 → 승인 후 실행
@@ -142,10 +170,10 @@ Phase의 모든 태스크가 `completed/`에 있을 때 (단일 세션에서 실
 완료 기준이 이미 원자적이면 (S 태스크 등) 생략한다.
 
 ```
-접근 방식 확인 → 검증 체크리스트 제시 → 사용자 승인 (필수) → 태스크 파일에 기록 → 구현
+접근 방식 확인 → 검증 체크리스트 제시 → 사용자 승인 (필수) → 태스크 파일에 기록 → 구현 → /verify 자동 실행
 ```
 
-### 6. 세션 종료 시 인수인계
+### 5. 세션 종료 시 인수인계
 
 1. 현재 진행 상황을 대화에 직접 요약 (완료한 것, 남은 것, 블로커)
 
@@ -157,11 +185,12 @@ Phase의 모든 태스크가 `completed/`에 있을 때 (단일 세션에서 실
 
 ```
 1. .claude/tasks/ 존재 확인
-2. CLAUDE.md, ROADMAP.md 읽기
-3. Glob queue/{pending,in_progress,completed}/*.md
-4. pending 중 blocked_by가 있는 파일만 Read
-5. git log --oneline -5 (미기록 작업 감지)
-6. 브리핑 + 다음 행동 제안
+2. CLAUDE.md 읽기
+3. Glob active/*/PLAN.md → 각 로드맵 파악
+4. Glob active/*/{pending,in_progress,completed}/*.md → 상태 집계
+5. pending 중 blocked_by가 있는 파일만 Read
+6. git log --oneline -5 (미기록 작업 감지)
+7. 로드맵별 브리핑 + 다음 행동 제안
 ```
 
 **핵심: Glob으로 상태 집계. 파일 내용은 최소한으로만 읽어 토큰 절약.**
@@ -169,11 +198,10 @@ Phase의 모든 태스크가 `completed/`에 있을 때 (단일 세션에서 실
 | Case | 상황 | 핵심 행동 |
 |------|------|----------|
 | 1 | 미초기화 | init_project.py 안내 |
-| 2 | 큐 비어있음 | ROADMAP.md 작성 제안 |
+| 2 | active/ 비어있음 | 새 로드맵 제안 |
 | 3 | 미기록 작업 감지 | completed/ 이동 제안 |
-| 4 | 태스크 있음 | 진행률 + 다음 태스크 제안 |
-| 5 | Phase 완료 | 아카이빙 제안 |
-| 6 | 로드맵 완료 | 로드맵 아카이빙 제안 |
+| 4 | 태스크 있음 | 로드맵별 진행률 + 다음 태스크 제안 |
+| 5 | 로드맵 완료 | 아카이빙 제안 |
 
 상세 템플릿: `references/brief-templates.md`
 
@@ -203,5 +231,3 @@ Phase의 모든 태스크가 `completed/`에 있을 때 (단일 세션에서 실
 ```bash
 python3 ~/.claude/skills/task-manager/scripts/init_project.py <project-root>
 ```
-
-ROADMAP.md 포맷: `references/roadmap-format.md`

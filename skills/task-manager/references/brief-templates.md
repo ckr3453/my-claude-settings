@@ -12,16 +12,16 @@
 → 그 다음 CLAUDE.md, ROADMAP.md를 작성하세요.
 ```
 
-## Case 1.5: 구조 있지만 SPEC 없음
+## Case 1.5: 구조 있지만 PLAN 없음
 
 ```
 브리핑
 
-프로젝트 구조는 있지만 SPEC.md가 없습니다.
+프로젝트 구조는 있지만 PLAN.md가 없습니다.
 
 CLAUDE.md: [있음/없음]
 
-→ 스펙 인터뷰를 시작할까요? (요구사항 구체화 → SPEC.md → ROADMAP → 태스크)
+→ PLAN 인터뷰를 시작할까요? (요구사항 구체화 → PLAN.md → 태스크 분해)
 ```
 
 ## Case 2: 큐 비어있음
@@ -31,13 +31,11 @@ CLAUDE.md: [있음/없음]
 
 프로젝트 구조는 있지만 태스크가 없습니다.
 
-SPEC.md: [있음(승인됨) / 있음(미승인) / 없음]
-ROADMAP.md: [있음/없음]
+PLAN.md: [있음(승인됨) / 있음(미승인) / 없음]
 
-→ SPEC 없음: 스펙 인터뷰부터 시작
-→ SPEC 미승인: SPEC.md 승인 대기
-→ SPEC 승인됨 + ROADMAP 없음: ROADMAP.md 작성 제안
-→ SPEC 승인됨 + ROADMAP 있음: 태스크 분해 제안
+→ PLAN 없음: PLAN 인터뷰부터 시작
+→ PLAN 미승인: PLAN.md 승인 대기
+→ PLAN 승인됨: 태스크 분해 제안
 ```
 
 ## Case 3: 미기록 작업 감지

@@ -49,7 +49,33 @@ Windows 환경에서는 래퍼 스크립트를 우선 탐지합니다:
 
 ## 실행 규칙
 
-1. **테스트만 실행** — 빌드, 배포, 마이그레이션 등은 실행하지 않음
+1. **변경 관련 테스트만 실행** — 전체 테스트가 아닌, 변경된 파일과 관련된 테스트만 실행
 2. **타임아웃 적용** — 5분(300초) 초과 시 중단하고 결과 보고
 3. **실패 시 상세 출력** — 어떤 테스트가 실패했는지 포함
 4. **이미 실행됐으면 생략** — 작업 중 테스트를 이미 실행했다면 그 결과를 참조
+
+## 관련 테스트 탐지
+
+전체 테스트 대신 변경과 관련된 테스트만 실행하여 효율을 높입니다.
+
+### git 사용 가능 시 (기본)
+
+1. `git diff --name-only`로 변경 파일 목록 수집
+2. 변경 파일에 대응하는 테스트 파일 탐색:
+   - `{ClassName}` → `{ClassName}Test`, `{ClassName}Spec`, `test_{class_name}`
+   - `src/main/` → `src/test/` 경로 대응
+3. 대응 테스트가 있으면 해당 테스트만 실행:
+   - Gradle: `./gradlew test --tests "*ClassName*"`
+   - Maven: `mvn test -Dtest=ClassNameTest`
+   - Jest: `npx jest --testPathPattern="className"`
+   - pytest: `pytest tests/test_class_name.py`
+4. 대응 테스트를 찾을 수 없으면 전체 테스트 실행
+
+### git 미사용 시 (폴백)
+
+git이 없거나 diff를 구할 수 없는 경우:
+
+1. 검증 항목에서 관련 클래스/파일명 추출
+2. 해당 클래스에 대응하는 테스트 파일을 Glob으로 탐색
+3. 찾은 테스트만 실행
+4. 못 찾으면 전체 테스트 실행
