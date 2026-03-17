@@ -6,27 +6,45 @@
 
 ## 분석 단계
 
-### Step 1: 최근 커밋 수집
+### Step 1: 분석 범위 결정
+
+사용자 발화에서 시간/브랜치 범위를 추출한다:
+
+| 사용자 표현 | 분석 범위 |
+|------------|----------|
+| "오늘 작업" | `--since="1 day ago"` |
+| "이번 주" | `--since="7 days ago"` |
+| "지난달", "한 달간" | `--since="30 days ago"` |
+| "이 브랜치 작업" | `git log main..HEAD` (브랜치 diff) |
+| 특정 브랜치명 언급 | `git log main..{브랜치명}` |
+| 범위 언급 없음 | `--since="3 days ago"` (기본값) |
+
+### Step 2: 커밋 수집
 
 ```bash
-git log --oneline --since="3 days ago" --no-merges
+# 시간 기반 (기본)
+git log --oneline --since="{범위}" --no-merges
+
+# 브랜치 기반
+git log --oneline main..HEAD --no-merges
 ```
 
-- 기본 범위: 최근 3일
 - 커밋이 5개 미만이면 범위를 7일로 확장
 - 커밋이 0개이면 사용자에게 기간 확인
 
-### Step 2: 주요 변경 파일 파악
+### Step 3: 주요 변경 파일 파악
 
 ```bash
 git diff --stat HEAD~{N}..HEAD
 ```
 
+N은 Step 2에서 수집된 커밋 수를 사용한다.
+
 - 변경량이 많은 파일 Top 5 추출
 - 테스트 파일 변경 동반 여부 확인
 - 설정 파일 변경 여부 확인
 
-### Step 3: 핵심 diff 분석
+### Step 4: 핵심 diff 분석
 
 ```bash
 git diff HEAD~{N}..HEAD -- {주요 파일}
@@ -42,7 +60,7 @@ git diff HEAD~{N}..HEAD -- {주요 파일}
 | 테스트 추가/수정 | 테스트 관련 경험 → 삽질기/TIL 후보 |
 | 다수 파일 대규모 변경 | 프로젝트 단위 작업 → 회고 후보 |
 
-### Step 4: 커밋 메시지 패턴 분석
+### Step 5: 커밋 메시지 패턴 분석
 
 | 커밋 메시지 키워드 | 추정 유형 |
 |-------------------|----------|
@@ -53,7 +71,7 @@ git diff HEAD~{N}..HEAD -- {주요 파일}
 | test, spec | TIL 또는 삽질기 |
 | revert | 삽질기 (강한 신호) |
 
-### Step 5: 주제 후보 생성
+### Step 6: 주제 후보 생성
 
 분석 결과를 종합하여 **2~3개 주제 후보**를 생성한다.
 

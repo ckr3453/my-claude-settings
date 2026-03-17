@@ -79,11 +79,12 @@ description: |
 
 **실행 순서:**
 
-1. `git log --oneline --since="3 days ago" --no-merges`로 최근 커밋 수집
-2. `git diff --stat`으로 주요 변경 파일 파악
-3. 핵심 파일의 diff를 읽고 변경 패턴 분석
-4. 커밋 메시지 키워드로 유형 추정
-5. **주제 후보 2~3개** 생성하여 사용자에게 제시
+1. 사용자 발화에서 시간 범위 추출 ("오늘" → 1일, "이번 주" → 7일, "지난달" → 30일, 없으면 기본 3일)
+2. 특정 브랜치 언급이 있으면 `git log main..HEAD`, 아니면 `git log --oneline --since="{범위}" --no-merges`로 커밋 수집
+3. `git diff --stat`으로 주요 변경 파일 파악
+4. 핵심 파일의 diff를 읽고 변경 패턴 분석
+5. 커밋 메시지 키워드로 유형 추정
+6. **주제 후보 2~3개** 생성하여 사용자에게 제시
 
 각 후보는 다음 정보를 포함:
 
@@ -119,11 +120,12 @@ description: |
 
 **초안 생성 규칙:**
 
-1. `references/writing-style-guide.md`의 문체 규칙 적용
-2. `references/post-type-templates.md`의 해당 유형 골격 사용
-3. `references/jekyll-format.md`의 front matter 포맷 적용
-4. 초안 전체를 대화에 출력 (파일 생성 아님)
-5. 사용자 피드백 대기
+1. 블로그 저장소에서 **같은 유형의 기존 포스트 1~2개**를 읽어 톤과 구조를 참고한다
+2. `references/writing-style-guide.md`의 문체 규칙 적용
+3. `references/post-type-templates.md`의 해당 유형 골격 사용
+4. `references/jekyll-format.md`의 front matter 포맷 적용
+5. 초안 전체를 대화에 출력 (파일 생성 아님)
+6. 사용자 피드백 대기
 
 **초안에 반드시 포함:**
 - Jekyll front matter (title, categories, date, last_modified_at, toc, toc_sticky, excerpt)
@@ -154,7 +156,9 @@ description: |
 
 초안이 확정되면 Jekyll 포맷의 마크다운 파일을 생성한다.
 
-**블로그 저장소:** 파일 생성 시점에 `AskUserQuestion`으로 경로를 1회 확인한다.
+**블로그 저장소 경로:**
+- memory에 블로그 저장소 경로가 저장되어 있으면 그대로 사용한다.
+- 없으면 `AskUserQuestion`으로 경로를 1회 확인한 뒤, memory에 저장하여 이후 세션에서 재확인 없이 사용한다.
 
 #### 기존 카테고리에 글 쓰기 (포스트 1개만 생성)
 
