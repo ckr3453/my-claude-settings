@@ -9,29 +9,6 @@
     "defaultMode": "bypassPermissions"
   },
   "hooks": {
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.claude/hooks/completion-checker.sh",
-            "timeout": 30000
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.claude/hooks/prompt_workflow_guide.sh"
-          }
-        ]
-      }
-    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
@@ -54,14 +31,26 @@
         ]
       }
     ],
-    "SubagentStop": [
+    "PostToolUseFailure": [
       {
         "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/subagent-report-check.sh",
-            "timeout": 5000
+            "command": "bash ~/.claude/hooks/tool-failure-tracker.sh",
+            "timeout": 2000
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/completion-checker.sh",
+            "timeout": 30000
           }
         ]
       }
@@ -71,8 +60,19 @@
     "type": "command",
     "command": "bash ~/.claude/statusline.sh"
   },
+  "enabledPlugins": {
+    "ralph-loop@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true
+  },
   "language": "korean",
   "autoUpdatesChannel": "latest",
   "skipDangerousModePermissionPrompt": true,
-  "teammateMode": "in-process"
+  "teammateMode": "in-process",
+  "feedbackSurveyState": {
+    "lastShownTime": 1754119717915
+  }
 }

@@ -12,28 +12,37 @@
 #     필드 분리는 첫 번째 | 기준이므로 패턴 내 | 는 안전
 # ─────────────────────────────────────────────────────────────
 
+# SKIP 메커니즘: .md 파일은 CRITICAL_PATTERNS 검사 제외
+SKIP_EXTENSIONS=("md")
+
+_should_skip() {
+  local file="$1"
+  local ext="${file##*.}"
+  for skip_ext in "${SKIP_EXTENSIONS[@]}"; do
+    [ "$ext" = "$skip_ext" ] && return 0
+  done
+  return 1
+}
+
 # 형식: "패턴 | 설명"
+# 언어 무관 패턴만 유지. 환경변수 참조($)는 시크릿 패턴에서 제외
 CRITICAL_PATTERNS=(
-  'eval\(|exec\(|system\(|child_process|subprocess\.call|os\.system | 임의 코드 실행 함수'
-  'BEGIN\s*\{|END\s*\{|getline | awk 인젝션 위험 패턴'
   'curl\s.*\|\s*(bash|sh|zsh)|wget\s.*\|\s*(bash|sh|zsh) | 원격 스크립트 파이프 실행'
-  '\.env|credentials|secret_key|api_key|password\s*= | 시크릿/인증정보 하드코딩'
+  '(password|secret_key|api_key)\s*=\s*["\x27][^$] | 시크릿/인증정보 하드코딩'
   'chmod\s+777|chmod\s+a\+rwx | 과도한 퍼미션 부여'
   'sudo\s|SUID|setuid | 권한 상승'
-  'innerHTML\s*=|document\.write\(|v-html | XSS 취약점'
-  'SELECT.*FROM.*WHERE.*\$|INSERT.*VALUES.*\$ | SQL 인젝션'
 )
 
 # 형식: "패턴 | 설명"
+# 범용 패턴만 유지. 언어 특정 패턴은 프로젝트 config에서 추가
 WARNING_PATTERNS=(
   'TODO|FIXME|HACK|XXX | 미해결 마커'
-  'console\.log|print\(|fmt\.Print|System\.out | 디버그 출력 잔존'
-  'any\b|as\s+any | TypeScript any 타입 사용'
-  'sleep\s*\(|time\.sleep|Thread\.sleep | 하드코딩 슬립'
-  'catch\s*\(\s*\)|except\s*: | 빈 예외 처리'
-  'disable.*eslint|noinspection|@Suppress | 린터 규칙 비활성화'
-  '\.only\(|fdescribe|fit\( | 테스트 포커스 잔존'
+  'disable.*eslint|noinspection|@Suppress|noqa|nolint | 린터 규칙 비활성화'
 )
+
+# 프로젝트별 오버라이드 지원
+EXTRA_CRITICAL_PATTERNS=()
+EXTRA_WARNING_PATTERNS=()
 
 # 형식: "패턴 | 라벨 | 검사 중점"
 LOCATIONS=(
@@ -46,4 +55,15 @@ LOCATIONS=(
 
 # 임계값
 THRESHOLD_FIX=3    # 이하이면 즉시 수정 지시
-THRESHOLD_AGENT=4  # 이상이면 에이전트 추천
+
+# ─── config 로드 함수 ───
+# 글로벌 먼저 로드 → 프로젝트 config 추가 로드 (병합)
+_load_config() {
+  local cwd="$1"
+  if [ -n "$cwd" ] && [ -f "$cwd/.claude/hooks/config.sh" ]; then
+    source "$cwd/.claude/hooks/config.sh"
+    # 프로젝트 config에서 EXTRA 패턴이 정의되면 병합
+    CRITICAL_PATTERNS+=("${EXTRA_CRITICAL_PATTERNS[@]}")
+    WARNING_PATTERNS+=("${EXTRA_WARNING_PATTERNS[@]}")
+  fi
+}

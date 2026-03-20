@@ -77,31 +77,42 @@ description: |
 - ...
 ```
 
-인터뷰 프레임워크: `references/interview-framework.md`
 
 ---
 
 ## 태스크 파일
 
 ```markdown
-# SWL 보고서 쿼리 구현
+# [태스크 제목]
 
-- phase: 4
-- size: M
-- blocked_by: 003-multi-template  (없으면 생략)
+- phase: [N]
+- size: [S/M/L]
+- blocked_by: [파일명]  (없으면 생략)
 
 ## 목표
-- SwlPipePointRepository 네이티브 쿼리 추가
+- 구현할 기능
 
 ## 완료 기준
-- [ ] GET /v1/swl-pipes가 200을 반환한다
-- [ ] 단위 테스트가 통과한다
+- [ ] {주어}가 {동작}한다
+
+## 검증 체크리스트 (M/L 태스크, 태스크 시작 시 생성)
+- [ ] 원자적 검증 항목
+
+## 컨텍스트 (선택)
+- read: src/.../관련파일.kt
+- tree: src/.../관련디렉토리/
 ```
 
 상태 필드 없음. **파일이 어느 디렉토리에 있느냐 = 상태.**
-크기: S (< 1hr), M (1-4hr), L (4hr+)
 
-상세 포맷: `references/task-format.md`
+| 필드 | 설명 |
+|------|------|
+| phase | 소속 Phase 번호 |
+| size | S (< 1hr), M (1-4hr), L (4hr+) |
+| blocked_by | 선행 태스크 파일명 (completed/에 있으면 unblocked) |
+| 컨텍스트 | `read:` 파일 Read, `tree:` 디렉토리 Glob. in_progress/ 이동 직후 자동 로딩 |
+
+파일명: `{번호}-{설명}.md`, 독립 태스크: `ind-{번호}-{설명}.md`, 긴급: `urgent-{번호}-{설명}.md`
 
 ---
 
@@ -122,7 +133,17 @@ description: |
 EnterPlanMode → AskUserQuestion 인터뷰 (3라운드+) → PLAN.md 초안 제시 → 승인 → ExitPlanMode → 파일 저장 + 태스크 분해
 ```
 
-상세: `references/interview-framework.md`
+#### 5개 질문 카테고리
+
+| 카테고리 | 핵심 질문 | 사용 시점 |
+|----------|----------|----------|
+| ① 본질 | "이것의 본질은 뭔가요? 표면적 요청과 실제 목표가 같은가요?" | **항상 첫 번째** |
+| ② 근본 원인 | "이게 근본 원인인가요, 증상인가요?" | 버그/개선 요청 시 |
+| ③ 숨겨진 가정 | "당연하다고 생각하는 전제가 있나요?" | 접근 방식이 이미 정해져 있을 때 |
+| ④ 기존 맥락 | "현재 코드베이스에서 관련된 부분은? 건드리면 안 되는 것은?" | 브라운필드 프로젝트 |
+| ⑤ 완료 조건 | "어떻게 되면 '완료'인가요? 구체적으로." | **항상 마지막** |
+
+적응적 규칙: 본질로 시작, 답변이 구체적이면 완료 조건으로 건너뜀. 라운드당 질문 1~2개. 사용자가 "됐어"라고 하면 종료.
 
 ### 0.5. 계획이 이미 있는 경우
 
@@ -203,8 +224,6 @@ EnterPlanMode → AskUserQuestion 인터뷰 (3라운드+) → PLAN.md 초안 제
 | 4 | 태스크 있음 | 로드맵별 진행률 + 다음 태스크 제안 |
 | 5 | 로드맵 완료 | 아카이빙 제안 |
 
-상세 템플릿: `references/brief-templates.md`
-
 ---
 
 ## 병렬 실행
@@ -212,12 +231,10 @@ EnterPlanMode → AskUserQuestion 인터뷰 (3라운드+) → PLAN.md 초안 제
 | 조건 | 처리 |
 |------|------|
 | 독립 태스크 ≤ 2개 | 순차 (기본) |
-| 독립 태스크 ≥ 3개 + 모두 S/M + 파일 겹침 없음 | 경량 병렬 (Task run_in_background) |
+| 독립 태스크 ≥ 3개 + 모두 S/M + 파일 겹침 없음 | 경량 병렬 (Task run_in_background, 최대 3개) |
 | 사용자가 명시 요청 | 팀 병렬 (TeamCreate) |
 
 **의심스러우면 순차. TeamCreate는 사용자 요청 시에만.**
-
-상세 규칙 + 동시성: `references/parallel-rules.md`
 
 ---
 

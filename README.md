@@ -8,10 +8,16 @@ Claude Code의 개인 설정 파일 모음입니다.
 ```
 ├── CLAUDE.md              # 글로벌 코딩 규칙 (TDD, 최소 변경 원칙 등)
 ├── settings.json          # Claude Code 설정 (hooks, permissions, language 등)
-├── agents/                # 커스텀 서브에이전트 (10종)
-├── hooks/                 # 도구 실행 전후 훅 스크립트
+├── agents/                # 커스텀 서브에이전트 (현재 0종, 10종 _archive)
+├── hooks/                 # 도구 실행 전후 훅 스크립트 (4종)
 └── skills/                # 커스텀 스킬 (6종)
 ```
+
+## 설계 원칙
+
+- **훅 중심**: 자동화할 수 있는 것은 훅으로. 에이전트/스킬은 최소한으로
+- **언어 무관**: 글로벌 설정은 특정 언어에 종속되지 않음. 언어별 패턴은 프로젝트 config에서 추가
+- **SKILL.md 우선**: 스킬 동작에 필수적인 규칙은 SKILL.md에 직접 포함. references는 큰 참조 데이터에만 사용
 
 ## CLAUDE.md
 
@@ -22,71 +28,56 @@ Claude Code의 개인 설정 파일 모음입니다.
 - **최소 변경 원칙** — 요청과 직접 관련 없는 코드는 건드리지 않음
 - **Workflow Rules** — 같은 파일 3회 편집 시 멈춤, 테스트 3회 실패 시 대안 제시
 
-## Agents
-
-특정 도메인에 특화된 서브에이전트 정의입니다. Claude Code가 `Agent` 도구 사용 시 자동으로 로드합니다.
-
-| Agent | 역할 |
-|-------|------|
-| `api-designer` | REST/GraphQL API 아키텍처 설계, OpenAPI 명세 |
-| `code-reviewer` | 코드 품질, 보안 취약점, 성능 최적화 리뷰 |
-| `database-administrator` | PostgreSQL/MySQL/MongoDB/Redis 운영, 고가용성 |
-| `debugger` | 복잡한 이슈 진단, 근본 원인 분석 |
-| `java-architect` | Spring/Java 17+ 엔터프라이즈 애플리케이션 설계 |
-| `kotlin-specialist` | Kotlin 코루틴, 멀티플랫폼, Android |
-| `qa-expert` | 테스트 전략, 품질 메트릭, 자동화율 70%+ 목표 |
-| `refactoring-specialist` | 안전한 코드 변환, 설계 패턴 적용, 복잡도 감소 |
-| `spring-boot-engineer` | Spring Boot 3+ 마이크로서비스, 리액티브, 클라우드 네이티브 |
-| `test-automator` | 테스트 프레임워크 설계, CI/CD 통합 |
-
 ## Hooks
 
 도구 실행 전후에 자동으로 실행되는 검사 스크립트입니다.
 
 | Hook | 트리거 | 역할 |
 |------|--------|------|
-| `completion-checker.sh` | `Stop` | 변경 파일 종합 검사 (빌드/린트, 경고 패턴, 레이어 분류) |
-| `prompt_workflow_guide.sh` | `UserPromptSubmit` | 구현 작업 감지 시 plan mode 및 task-manager 사용 안내 |
-| `post-tool-check.sh` | `PostToolUse` (Edit/Write/Bash) | 보안 패턴 차단, 파괴적 명령 경고 |
-| `subagent-report-check.sh` | `SubagentStop` | 에이전트 완료 시 리뷰/QA/테스트 리마인더 |
-| `config.sh` | - | 공통 설정 (차단 패턴, 경고 패턴, 임계값) |
+| `post-tool-check.sh` | `PostToolUse` (Edit/Write/Bash) | 보안 패턴 차단 (시크릿, 권한 상승 등), 파괴적 명령 경고, 변경 파일 기록 |
+| `tool-failure-tracker.sh` | `PostToolUseFailure` (*) | 60초 윈도우 내 반복 실패 감지. Edit 3회/Bash 3회/전체 5회 시 stagnation 경고 주입 |
+| `completion-checker.sh` | `Stop` | 변경 파일 종합 검사 (빌드 자동감지, 경고 패턴), 이슈 리포트 |
+| `config.sh` | - | 공통 설정 (차단/경고 패턴, SKIP 확장자, 프로젝트별 오버라이드 지원) |
+
+### 프로젝트별 패턴 추가
+
+프로젝트 루트에 `.claude/hooks/config.sh`를 만들면 언어별 패턴을 추가할 수 있습니다:
+
+```bash
+# .claude/hooks/config.sh (프로젝트 레벨)
+EXTRA_CRITICAL_PATTERNS=(
+  'eval\(|exec\( | 임의 코드 실행'
+)
+EXTRA_WARNING_PATTERNS=(
+  'System\.out | 디버그 출력 잔존'
+  'Thread\.sleep | 하드코딩 슬립'
+)
+```
+
+## Agents
+
+범용 직군형 에이전트 10종은 `_archive/`로 이동했습니다. 빌트인 subagent_type(Explore, Plan 등)으로 충분하며, 필요 시 구체적 용도의 에이전트를 추가합니다.
 
 ## Skills
 
 Claude Code에서 슬래시 명령(`/skill-name`)으로 호출하는 커스텀 스킬입니다.
 
-### ai-trends-report
+| 스킬 | 명령 | 용도 |
+|------|------|------|
+| **verifier** | `/verify` | 요구사항 대비 4단계 증거 기반 검증. PASS 시 자동 커밋 |
+| **task-manager** | `/brief`, `/task-manager` | 디렉토리 기반 태스크 추적. PLAN 인터뷰 → 태스크 분해 → 순차 실행 |
+| **blog-writer** | `/blog`, `/blog-interview` | git 이력 또는 인터뷰 기반 기술 블로그 포스트 생성 |
+| **tech-decision** | `/tech-decision` | 커뮤니티 의견 기반 기술 선택 의사결정 지원 |
+| **ai-trends-report** | `/ai-trends-report` | AI 기술 트렌드 수집/분석 이메일 보고서 |
+| **global-economy-report** | `/global-economy-report` | 글로벌 경제 이슈 수집/분석 이메일 보고서 |
 
-48시간 이내 AI 기술 트렌드를 수집/분석하여 이메일로 보고서를 전송합니다.
-국내외 주요 AI 커뮤니티와 기사에서 핵심 이슈를 요약합니다.
+## 기본 워크플로우
 
-### blog-writer
+```
+작업 요청 → 구현 (훅이 자동 보호) → completion-checker(자동) → /verify → 커밋
+```
 
-코딩 작업 경험을 캐주얼 에세이 스타일의 기술 블로그 포스트로 변환합니다.
-- **Mode A** (`/blog`): git 이력 분석 기반
-- **Mode B** (`/blog-interview`): 인터뷰 기반
-
-### global-economy-report
-
-48시간 이내 글로벌 경제 이슈를 수집/분석하여 이메일로 보고서를 전송합니다.
-해외 주요 경제 매체와 국내 경제 뉴스를 분리하여 제공합니다.
-
-### task-manager
-
-장기 프로젝트의 태스크 상태를 디렉토리 기반(`active/{로드맵}/pending|in_progress|completed`)으로 추적합니다.
-- `/brief` — 현재 상태 확인
-- Plan Mode 인터뷰 → PLAN.md 작성 → 태스크 분해 워크플로우
-- 중단된 작업 재개, 로드맵별 진행률 관리, 아카이빙 지원
-
-### tech-decision
-
-기술 선택/비교를 돕는 스킬입니다. 인터뷰로 현황을 파악한 후
-Stack Overflow, Reddit, Hacker News 등 커뮤니티의 실제 의견을 수집/분석하여 근거 기반 추천을 제공합니다.
-
-### verifier
-
-작업 결과를 요구사항 대비 증거 기반으로 검증합니다 (4단계 프로토콜).
-1. 요구사항 분해 → 2. 코드 증거 대조 → 3. 변경 영향 리뷰 → 4. 정성적 코드 리뷰
+장기 작업은 `/task-manager`로 로드맵을 세운 후 태스크 단위로 진행합니다.
 
 ## 사용법
 

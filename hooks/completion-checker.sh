@@ -5,21 +5,34 @@ INPUT=$(cat)
 CWD=$(echo "$INPUT" | jq -r '.cwd // empty' 2>/dev/null)
 [ -z "$CWD" ] && exit 0
 
-CHANGED="$CWD/.claude/.changed-files"
+SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty' 2>/dev/null)
+CHANGED="/tmp/.claude-changed-${SESSION_ID:-$$}"
 [ -f "$CHANGED" ] || exit 0
 
 # config 로드
-if [ -f "$CWD/.claude/hooks/config.sh" ]; then
-  source "$CWD/.claude/hooks/config.sh"
-else
-  source ~/.claude/hooks/config.sh
-fi
+source ~/.claude/hooks/config.sh
+_load_config "$CWD"
 
-# commands.sh에서 빌드/린트 명령 추출 (source 안 함, grep으로 안전하게)
+# ─── 빌드 명령 자동 감지 ───
+BUILD_CMD=""
+LINT_CMD=""
+
+# commands.sh에서 먼저 시도
 COMMANDS_FILE="$CWD/.claude/hooks/commands.sh"
 if [ -f "$COMMANDS_FILE" ]; then
   BUILD_CMD=$(grep -m1 '^BUILD_CMD=' "$COMMANDS_FILE" | cut -d= -f2- | tr -d '"' | tr -d "'")
   LINT_CMD=$(grep -m1 '^LINT_CMD=' "$COMMANDS_FILE" | cut -d= -f2- | tr -d '"' | tr -d "'")
+fi
+
+# commands.sh에 없으면 빌드 도구 자동 감지
+if [ -z "$BUILD_CMD" ]; then
+  if [ -f "$CWD/gradlew" ]; then
+    BUILD_CMD="./gradlew build -x test 2>&1"
+  elif [ -f "$CWD/pom.xml" ]; then
+    BUILD_CMD="mvn compile -q 2>&1"
+  elif [ -f "$CWD/package.json" ]; then
+    BUILD_CMD="npm run build --if-present 2>&1"
+  fi
 fi
 
 REPORT=""
@@ -52,7 +65,7 @@ while IFS= read -r filepath; do
     if [ -n "$matches" ]; then
       while IFS= read -r line; do
         line_num="${line%%:*}"
-        WARNINGS+="  ⚠ $desc — $filepath:$line_num\n"
+        WARNINGS+="  WARNING: $desc — $filepath:$line_num\n"
         ((ISSUE_COUNT++))
       done <<< "$matches"
     fi
@@ -69,7 +82,7 @@ while IFS= read -r filepath; do
     loc_label=$(echo "$entry" | cut -d'|' -f2 | xargs)
     loc_focus=$(echo "$entry" | cut -d'|' -f3 | xargs)
     if echo "$filepath" | grep -qE "$loc_pattern"; then
-      LAYERS+="  📁 [$loc_label] $filepath — 중점: $loc_focus\n"
+      LAYERS+="  [$loc_label] $filepath — 중점: $loc_focus\n"
       break
     fi
   done
@@ -80,15 +93,15 @@ done < "$CHANGED"
 # ─── .changed-files 삭제 (1회성) ───
 rm -f "$CHANGED"
 
+# ─── 실패 추적 파일도 정리 ───
+rm -f /tmp/.claude-fail-${SESSION_ID}-* 2>/dev/null
+
 # ─── 결과 분기 ───
 if [ $ISSUE_COUNT -eq 0 ]; then
   echo "[시스템 지시] /verify로 요구사항 충족을 확인하세요."
-elif [ $ISSUE_COUNT -le $THRESHOLD_FIX ]; then
+elif [ $ISSUE_COUNT -gt 0 ]; then
   echo -e "[검사 결과: ${ISSUE_COUNT}건]\n${REPORT}"
-  echo "[시스템 지시] 위 이슈를 수정하세요."
-else
-  echo -e "[검사 결과: ${ISSUE_COUNT}건]\n${REPORT}"
-  echo "[시스템 지시] 이슈가 ${ISSUE_COUNT}건입니다. code-reviewer, qa-expert, test-automator 에이전트 활용을 권장합니다."
+  echo "[시스템 지시] 위 이슈를 수정하세요. 수정 후 /verify로 요구사항 충족을 확인하세요."
 fi
 
 exit 0
