@@ -43,7 +43,7 @@ triggers: /prototype, /prototype-iterate, /prototype-gallery
 ### 0. 입력 수집
 
 **경로 A (PRD 기반):**
-1. 프로젝트 루트에 `PRD.md` 존재 확인
+1. `.claude/prd/PRD.md` 존재 확인 (없으면 레거시 위치 `PRD.md`도 확인)
 2. "7. 화면 & 플로우" 섹션 추출
 3. 주요 화면 목록과 핵심 동선 파악
 4. 섹션이 비어있거나 "해당 없음"이면 경로 B로 전환
@@ -58,7 +58,7 @@ triggers: /prototype, /prototype-iterate, /prototype-gallery
 
 프로젝트 루트에:
 ```
-.prototypes/
+.claude/prototypes/
 └── <feature-name>/
     ├── gallery.html
     ├── v1-<approach>/
@@ -87,7 +87,7 @@ HTML 스켈레톤: `templates/base.html`
 
 ### 3. 갤러리 페이지 생성
 
-`.prototypes/<feature>/gallery.html`:
+`.claude/prototypes/<feature>/gallery.html`:
 - 3개 variant를 iframe으로 나란히 로드
 - 각 variant의 접근 방식 설명
 - 데스크톱 3열, 모바일 세로 스택
@@ -109,13 +109,13 @@ bash ~/.claude/skills/ui-prototyper/scripts/serve.sh <project-root>/.prototypes
 
 갤러리: http://localhost:8765/<feature-name>/gallery.html
 
-서버 종료: kill $(cat .prototypes/.server.pid)
+서버 종료: kill $(cat .claude/prototypes/.server.pid)
 ```
 
 ### 5. .gitignore 안내
 
-`.prototypes/`가 프로젝트 `.gitignore`에 없으면:
-"`.prototypes/`를 .gitignore에 추가하시겠어요?" 물음
+`.claude/prototypes/`가 프로젝트 `.gitignore`에 없으면:
+"`.claude/prototypes/`를 .gitignore에 추가하시겠어요?" 물음
 
 ### 6. 다음 단계 안내
 
@@ -135,7 +135,7 @@ bash ~/.claude/skills/ui-prototyper/scripts/serve.sh <project-root>/.prototypes
 
 사용 예: `/prototype-iterate v2 "필드명 truncate 말고 tooltip으로"`
 
-1. 기존 `.prototypes/<feature>/v2-<approach>/index.html` 읽기
+1. 기존 `.claude/prototypes/<feature>/v2-<approach>/index.html` 읽기
 2. 피드백 반영한 새 variant 생성
 3. `v2-iter1/index.html` 또는 `v4-<new-approach>/index.html`로 저장 (사용자 선택)
 4. 갤러리 업데이트
@@ -143,7 +143,7 @@ bash ~/.claude/skills/ui-prototyper/scripts/serve.sh <project-root>/.prototypes
 
 ## /prototype-gallery — 갤러리 다시 열기
 
-1. `.prototypes/` 하위 feature 폴더 목록 제시
+1. `.claude/prototypes/` 하위 feature 폴더 목록 제시
 2. 사용자가 선택하면 해당 갤러리 URL 안내 (서버 실행 중이면 바로, 아니면 서버 시작)
 
 ---

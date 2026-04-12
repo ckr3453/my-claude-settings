@@ -41,8 +41,8 @@ triggers: /prd, /prd-interview
 ### 0. 사전 점검
 
 1. 현재 작업 디렉토리가 프로젝트 루트인지 확인
-2. `PRD.md` 존재 여부 확인
-   - 있으면: "업데이트 / 새로 작성 / 다른 이름(`docs/PRD-<feature>.md`)으로" 선택지 제시
+2. `.claude/prd/PRD.md` 존재 여부 확인 (없으면 레거시 위치 `PRD.md`도 확인)
+   - 있으면: "업데이트 / 새로 작성 / 다른 이름(`.claude/prd/PRD-<feature>.md`)으로" 선택지 제시
    - 없으면: 신규 작성 모드 진입
 
 ### 1. 코드베이스 선스캔
@@ -100,8 +100,8 @@ triggers: /prd, /prd-interview
 ### 4. PRD.md 파일 생성
 
 1. 템플릿(`templates/prd.md`) 기반으로 작성
-2. 프로젝트 루트에 `PRD.md`로 저장 (기본)
-3. 여러 PRD 공존 시 `docs/PRD-<feature>.md` (사용자에게 물어봄)
+2. `.claude/prd/PRD.md`로 저장 (기본). `.claude/prd/` 폴더가 없으면 생성.
+3. 여러 PRD 공존 시 `.claude/prd/PRD-<feature>.md` (사용자에게 물어봄)
 4. 작성일에 실제 날짜 기입, 상태는 `Draft`
 
 ### 5. 완료 판정
