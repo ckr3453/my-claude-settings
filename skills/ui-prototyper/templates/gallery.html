@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>{{FEATURE_NAME}} — Prototype Gallery</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen p-6">
+  <div class="max-w-7xl mx-auto">
+    <header class="mb-8">
+      <h1 class="text-3xl font-bold">{{FEATURE_NAME}}</h1>
+      <p class="text-slate-400 mt-2">{{FEATURE_DESCRIPTION}}</p>
+      <p class="text-sm text-slate-500 mt-1">{{TIMESTAMP}}</p>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Variant 1 -->
+      <div class="bg-slate-800 rounded-lg overflow-hidden">
+        <div class="p-4 border-b border-slate-700">
+          <h2 class="text-lg font-semibold">v1: {{V1_APPROACH}}</h2>
+          <p class="text-sm text-slate-400 mt-1">{{V1_DESCRIPTION}}</p>
+        </div>
+        <iframe
+          src="v1-{{V1_SLUG}}/index.html"
+          class="w-full h-96 bg-white"
+          title="v1"
+        ></iframe>
+        <div class="p-3 bg-slate-900 flex gap-2 text-xs">
+          <a href="v1-{{V1_SLUG}}/index.html" target="_blank"
+             class="px-3 py-1 bg-blue-600 rounded hover:bg-blue-700">
+            크게 보기
+          </a>
+          <span class="px-3 py-1 text-slate-500">
+            iterate: /prototype-iterate v1 "피드백"
+          </span>
+        </div>
+      </div>
+
+      <!-- Variant 2 -->
+      <div class="bg-slate-800 rounded-lg overflow-hidden">
+        <div class="p-4 border-b border-slate-700">
+          <h2 class="text-lg font-semibold">v2: {{V2_APPROACH}}</h2>
+          <p class="text-sm text-slate-400 mt-1">{{V2_DESCRIPTION}}</p>
+        </div>
+        <iframe
+          src="v2-{{V2_SLUG}}/index.html"
+          class="w-full h-96 bg-white"
+          title="v2"
+        ></iframe>
+        <div class="p-3 bg-slate-900 flex gap-2 text-xs">
+          <a href="v2-{{V2_SLUG}}/index.html" target="_blank"
+             class="px-3 py-1 bg-blue-600 rounded hover:bg-blue-700">
+            크게 보기
+          </a>
+          <span class="px-3 py-1 text-slate-500">
+            iterate: /prototype-iterate v2 "피드백"
+          </span>
+        </div>
+      </div>
+
+      <!-- Variant 3 -->
+      <div class="bg-slate-800 rounded-lg overflow-hidden">
+        <div class="p-4 border-b border-slate-700">
+          <h2 class="text-lg font-semibold">v3: {{V3_APPROACH}}</h2>
+          <p class="text-sm text-slate-400 mt-1">{{V3_DESCRIPTION}}</p>
+        </div>
+        <iframe
+          src="v3-{{V3_SLUG}}/index.html"
+          class="w-full h-96 bg-white"
+          title="v3"
+        ></iframe>
+        <div class="p-3 bg-slate-900 flex gap-2 text-xs">
+          <a href="v3-{{V3_SLUG}}/index.html" target="_blank"
+             class="px-3 py-1 bg-blue-600 rounded hover:bg-blue-700">
+            크게 보기
+          </a>
+          <span class="px-3 py-1 text-slate-500">
+            iterate: /prototype-iterate v3 "피드백"
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <footer class="mt-8 text-sm text-slate-500">
+      <p>피드백을 PRD에 반영하려면 <code class="bg-slate-800 px-2 py-1 rounded">/prd</code> 재실행</p>
+    </footer>
+  </div>
+</body>
+</html>
