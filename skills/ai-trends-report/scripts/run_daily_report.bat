@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 > nul
-cd /d C:\Users\david
+cd /d %USERPROFILE%
 
 set LOGDIR=%USERPROFILE%\.claude\skills\ai-trends-report\logs
 set LOGFILE=%LOGDIR%\daily_report.log

@@ -98,10 +98,10 @@ rm -f /tmp/.claude-fail-${SESSION_ID}-* 2>/dev/null
 
 # ─── 결과 분기 ───
 if [ $ISSUE_COUNT -eq 0 ]; then
-  echo "[시스템 지시] /verify로 요구사항 충족을 확인하세요."
+  echo "[시스템 지시] /verifier로 요구사항 충족을 확인하세요."
 elif [ $ISSUE_COUNT -gt 0 ]; then
   echo -e "[검사 결과: ${ISSUE_COUNT}건]\n${REPORT}"
-  echo "[시스템 지시] 위 이슈를 수정하세요. 수정 후 /verify로 요구사항 충족을 확인하세요."
+  echo "[시스템 지시] 위 이슈를 수정하세요. 수정 후 /verifier로 요구사항 충족을 확인하세요."
 fi
 
 exit 0
