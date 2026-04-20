@@ -51,23 +51,23 @@ mv "$TEMP_FILE" "$STATE_FILE"
 
 # Edit 실패 3회 (같은 파일)
 if [ "$TOOL" = "Edit" ] && [ "$FAIL_COUNT" -ge 3 ]; then
-  echo "[STAGNATION] 같은 파일을 ${FAIL_COUNT}회 Edit 실패했습니다. 멈추고 접근 방식을 재고하세요. 파일을 다시 Read한 후 재시도하세요."
+  echo "[STAGNATION] 같은 파일을 ${FAIL_COUNT}회 Edit 실패했습니다. 멈추고 접근 방식을 재고하세요. 파일을 다시 Read한 후 재시도하세요." >&2
   rm -f "$STATE_FILE"
-  exit 0
+  exit 2
 fi
 
 # Bash(test) 실패 3회
 if [ "$TOOL" = "Bash" ] && [ "$FAIL_COUNT" -ge 3 ]; then
-  echo "[STAGNATION] 테스트/명령이 ${FAIL_COUNT}회 연속 실패했습니다. 현재 접근을 중단하고 대안을 제시하세요."
+  echo "[STAGNATION] 테스트/명령이 ${FAIL_COUNT}회 연속 실패했습니다. 현재 접근을 중단하고 대안을 제시하세요." >&2
   rm -f "$STATE_FILE"
-  exit 0
+  exit 2
 fi
 
 # 모든 도구 5회 실패
 if [ "$FAIL_COUNT" -ge 5 ]; then
-  echo "[STAGNATION] ${TOOL}이(가) ${FAIL_COUNT}회 실패했습니다. 에러 메시지를 정확히 읽고 근본 원인을 분석하세요. 같은 방식으로 재시도하지 마세요."
+  echo "[STAGNATION] ${TOOL}이(가) ${FAIL_COUNT}회 실패했습니다. 에러 메시지를 정확히 읽고 근본 원인을 분석하세요. 같은 방식으로 재시도하지 마세요." >&2
   rm -f "$STATE_FILE"
-  exit 0
+  exit 2
 fi
 
 exit 0
