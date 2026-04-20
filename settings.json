@@ -92,8 +92,5 @@
   "language": "korean",
   "autoUpdatesChannel": "latest",
   "skipDangerousModePermissionPrompt": true,
-  "teammateMode": "in-process",
-  "feedbackSurveyState": {
-    "lastShownTime": 1754119717915
-  }
+  "teammateMode": "in-process"
 }
