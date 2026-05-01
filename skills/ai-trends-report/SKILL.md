@@ -8,36 +8,28 @@ allowed-tools: ["Read", "Write", "WebSearch", "WebFetch", "Bash(date *)", "Bash(
 
 # AI Trends Report Skill
 
-AI 기술 트렌드를 수집, 분석하여 마크다운 보고서 생성 후 이메일 전송.
-
-## ⛔ 실행 모드 제약
-
-- **절대 plan mode를 사용하지 말 것. 계획서 작성 없이 즉시 실행할 것.**
-- 이 스킬은 비대화형(`-p`) 모드에서 스케줄러로 자동 실행된다.
-- plan mode에 진입하면 승인할 사용자가 없어 작업이 완전히 실패한다.
-- EnterPlanMode 도구를 절대 호출하지 말 것.
-
 ## 파이프라인
 
-```
-Step 0: 날짜 계산                        → references/date-filtering.md
-Step 1: 수집 (국내 WebFetch + 해외 WebSearch) → references/execution-steps.md
-Step 2: 날짜 필터링 + AI 관련성 필터링       → references/date-filtering.md + execution-steps.md
-Step 3: 보고서 생성                      → references/report-template.md
-Step 4: 이메일 전송                      → scripts/send_email.py
-```
+| Step | 작업 | 참조 |
+|------|------|------|
+| 0 | 날짜 계산 (오늘/어제) | `references/date-filtering.md` |
+| 1-A | 국내 크롤링 (WebFetch) | `references/execution-steps.md` |
+| 1-B | 해외 검색 (WebSearch) | `references/execution-steps.md` |
+| 2 | 날짜 필터링 + AI 관련성 필터링 | `references/date-filtering.md`, `execution-steps.md` |
+| 3 | 보고서 생성 | `references/report-template.md` |
+| 4 | 이메일 전송 | `scripts/send_email.py` |
 
-**반드시 아래 순서로 진행한다:**
+실행 절차:
 
-1. **`references/date-filtering.md`를 Read** — Step 0 날짜 계산 명령과 필터링 규칙을 로드
-2. **`references/execution-steps.md`를 Read** — Step 1-A (국내 크롤링), Step 1-B (해외 검색), Step 1-D (AI 관련성) 절차를 로드
+1. `references/date-filtering.md` Read → Step 0 날짜 계산 명령 + 필터링 규칙 로드
+2. `references/execution-steps.md` Read → Step 1-A, 1-B, AI 관련성 필터링 절차 로드
 3. Step 0의 bash 명령으로 오늘/어제 날짜 계산
 4. Step 1-A → Step 1-B 순차 실행 (병렬 호출 금지)
 5. 수집 결과에 날짜 필터링 + AI 관련성 필터링 적용
-6. **`references/report-template.md`를 Read** — 템플릿 로드 후 `/tmp/ai_trends_report_YYYYMMDD.md`로 저장
+6. `references/report-template.md` Read → `/tmp/ai_trends_report_YYYYMMDD.md`로 저장
 7. `scripts/send_email.py`로 이메일 전송
 
-검색 대상 커뮤니티/URL 목록은 `references/sources.md` 참조.
+검색 대상 커뮤니티/URL 목록: `references/sources.md`
 
 ## 보고서 섹션 구조
 
@@ -73,12 +65,12 @@ Step 4: 이메일 전송                      → scripts/send_email.py
 5. **내용 없으면 솔직하게**: "오늘은 특별한 소식이 없습니다" 표기
 6. **각 항목의 핵심 가치를 명확히**: "무엇이 발표/변경되었고, 왜 중요한지"를 반드시 포함
 
-## ⛔ 최종 체크리스트 (보고서 생성 전)
+## 최종 체크리스트 (보고서 생성 전)
 
-- ⛔ 2일 전 이상의 항목 없는가? (Step 0의 오늘/어제 날짜로 검증)
-- ⛔ AI 무관 항목 없는가?
-- ⛔ 동일 URL 중복 없는가?
-- ⛔ 같은 사건을 여러 항목으로 반복 기술하지 않았는가?
+- 2일 전 이상의 항목 없는가? (Step 0의 오늘/어제 날짜로 검증)
+- AI 무관 항목 없는가?
+- 동일 URL 중복 없는가?
+- 같은 사건을 여러 항목으로 반복 기술하지 않았는가?
 
 ## 이메일 설정
 
