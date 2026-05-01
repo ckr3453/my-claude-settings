@@ -5,7 +5,7 @@ description: |
   3단계 파이프라인(기계적 게이트 → Verifier 증거 대조 → Adversary 반박 검증)을 서브에이전트로 실행하여 메인 에이전트의 확증 편향과 컨텍스트 오염을 방지한다.
 ---
 
-# 검증자 (Verifier) — 3단계 파이프라인 디스패처
+# 검증자 (Verifier)
 
 ## 파이프라인 개요
 
@@ -29,7 +29,7 @@ Stage 3: Adversary (adversary 서브에이전트)
 
 ## Stage 1: 기계적 게이트
 
-메인 에이전트가 `scripts/run-stage1.sh`를 호출한다 (서브에이전트 불필요, LLM 추론 없음).
+메인 에이전트가 `scripts/run-stage1.sh`를 호출한다.
 
 ```bash
 bash ~/.claude/skills/verifier/scripts/run-stage1.sh <프로젝트 루트>
@@ -43,7 +43,20 @@ bash ~/.claude/skills/verifier/scripts/run-stage1.sh <프로젝트 루트>
 |---|---|---|
 | 0 | PASS (빌드 + 테스트 통과) | Stage 2 진행. stdout 첫 줄을 Stage 2 프롬프트에 그대로 전달. |
 | 1 | FAIL | **즉시 중단**. stdout 전체를 사용자에게 그대로 보고. Stage 2/3 호출하지 않는다. 수정은 verifier의 책임이 아니다. |
-| 2 | SKIP (빌드 도구 미감지) | 사용자에게 보고하고, "테스트 없이 코드 증거만으로 검증을 진행할까요?" 물어본 뒤 응답에 따라 Stage 2 진행 여부 결정. |
+| 2 | SKIP (빌드 도구 미감지) | AskUserQuestion으로 진행 여부 확인 (아래 참조). |
+
+**SKIP 시 AskUserQuestion:**
+
+```
+AskUserQuestion(
+  question: "빌드 도구를 감지하지 못했습니다. 테스트 없이 코드 증거만으로 검증을 진행할까요?",
+  header: "Stage 1 SKIP",
+  options: [
+    {label: "Stage 2 진행", description: "기계적 게이트 없이 verifier 서브에이전트가 코드 증거만으로 검증"},
+    {label: "중단", description: "검증을 중단하고 사용자가 별도 처리"}
+  ]
+)
+```
 
 ---
 
