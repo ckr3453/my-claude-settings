@@ -80,7 +80,7 @@ AskUserQuestion(
   question: "구현이 끝났습니다. verifier로 검증할까요?",
   header: "검증 진행",
   options: [
-    {label: "verifier 진행", description: "/verifier 호출 → 3단계 파이프라인 실행"},
+    {label: "verifier 진행", description: "/verifier 호출 → 결과 받기"},
     {label: "건너뛰기", description: "검증 없이 task_transition.py로 완료 처리 (권장 X)"},
     {label: "취소", description: "여기서 멈춘다 — 사용자가 추가 작업"}
   ]
