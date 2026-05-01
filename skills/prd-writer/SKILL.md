@@ -2,47 +2,39 @@
 name: prd-writer
 description: |
   제품/피처의 비개발 층위(WHY/WHO/WHAT — 문제·유저·유즈케이스·가정·범위·지표)를 인터뷰 기반으로 정의해 .claude/prd/PRD.md를 생성한다.
-  task-manager는 직접 호출하지 않으며 PRD.md 파일로만 결합한다.
   단순 버그 수정, 리팩토링, UI 없는 소규모 개선에는 사용하지 않는다.
 triggers: /prd, /prd-interview
 ---
 
 # PRD Writer
 
-**비개발 층위(WHY / WHO / WHAT)만 다룬다. 기술 스택, 구현 방법, 아키텍처는 task-manager 영역.**
-
-> "Be as explicit as possible about what you are trying to build and why.
-> Do not focus on the tech stack at this point." — Spec-Kit
-
 ## 사용하지 않는 경우
 
-- **구현 방법이 궁금할 때** — task-manager `/brief` 사용
 - **단순 버그 수정** — PRD 불필요, 바로 수정
-- **기존 API 리팩토링** — PRD 불필요, task-manager로 충분
+- **기존 API 리팩토링** — PRD 불필요
 - **UI 없는 소규모 개선** — PRD 오버헤드가 이점보다 큼
 
 ---
 
-## 스킬 간 역할 분리
-
-| 스킬 | 담당 층위 | 산출물 | 질문 초점 |
-|---|---|---|---|
-| **prd-writer** | WHY / WHO / WHAT | `PRD.md` | 왜 / 누구 / 무엇 / 가정 / 범위 |
-| task-manager | HOW | `PLAN.md` + 태스크 | 어떻게 / 코드 연결 / 트랜잭션 |
-| verifier | 검증 | 커밋 | — |
-
-**결합은 파일로만.** prd-writer가 task-manager를 직접 호출하지 않는다.
-
----
-
-## AI 행동 규칙 (반드시 준수)
+## AI 행동 규칙
 
 ### 0. 사전 점검
 
 1. 현재 작업 디렉토리가 프로젝트 루트인지 확인
 2. `.claude/prd/PRD.md` 존재 여부 확인 (없으면 레거시 위치 `PRD.md`도 확인)
-   - 있으면: "업데이트 / 새로 작성 / 다른 이름(`.claude/prd/PRD-<feature>.md`)으로" 선택지 제시
-   - 없으면: 신규 작성 모드 진입
+   - 있으면 AskUserQuestion으로 처리 방향 확인:
+     ```
+     AskUserQuestion(
+       question: "기존 PRD.md가 있습니다. 어떻게 진행할까요?",
+       header: "기존 PRD",
+       options: [
+         {label: "업데이트", description: "기존 PRD.md를 인터뷰로 보강"},
+         {label: "새로 작성", description: "기존 PRD.md를 덮어쓰고 신규 작성"},
+         {label: "다른 이름으로", description: ".claude/prd/PRD-<feature>.md로 별도 저장"}
+       ]
+     )
+     ```
+   - 없으면 신규 작성 모드 진입
 
 ### 1. 코드베이스 선스캔
 
@@ -52,130 +44,97 @@ triggers: /prd, /prd-interview
 2. 주요 디렉토리 구조 파악 (Glob)
 3. `git log --oneline -20` — 최근 작업 흐름 파악
 
-### 2. 인터뷰 실행 (핵심)
+### 2. 인터뷰 실행
 
-**라운드 구성:**
+**라운드 구성** (질문 풀: `references/question-bank.md`):
 
-- **라운드 1: 문제 정의** — 필수 2-3개 (question-bank 카테고리 1에서 선택)
-- **라운드 2: 유저와 유즈케이스** — 카테고리 3에서 선택
-- **라운드 3: 범위와 가정** — 카테고리 4, 5에서 선택
-- **라운드 4-5 (선택): 존재론적 심화** — 답변에 모호한 부분이 있을 때만 진입 (카테고리 2)
-
-질문 풀: `references/question-bank.md`
+- **라운드 1: 문제 정의** — 카테고리 1 (필수 2-3개)
+- **라운드 2: 유저와 유즈케이스** — 카테고리 3
+- **라운드 3: 범위** — 카테고리 4
+- **라운드 4: 가정** — 카테고리 5
+- **라운드 5: 성공 지표** — 카테고리 6
+- **라운드 6 (UI 있는 피처만): 화면 & 플로우** — 카테고리 7
+- **라운드 7 (선택): 존재론적 심화** — 답변에 모호한 부분이 있을 때만 진입 (카테고리 2)
 
 **진행 원칙:**
 
 - 한 라운드에 질문 **최대 3-4개**
 - 답변이 모호하면 "구체 예시 하나만" 요청
-- **가정 뒤집기**: "X는 당연히 ~다"에 "만약 그게 틀렸다면?" 1회 허용
-- "정말 그런가요?" 재검증 최대 1회
-- 답변을 받으면 내부적으로 해당 섹션에 초안 누적 (아직 파일 저장 X)
+- **가정 뒤집기**: "X는 당연히 ~다"에 "만약 그게 틀렸다면?" 던질 수 있다
+- 답이 모호하면 "정말 그런가요?" 재검증 가능
+- 답변을 받으면 내부적으로 해당 섹션에 초안 누적
 - 사용자가 "충분해" / "진행해" / "됐어"라고 하면 종료
 - AI도 충분하다 판단하면 종료 제안 가능
 
 **금기:**
 
-- 기술 스택 질문 ("React? Vue?", "DB 뭐 쓸까요?") **절대 금지** → task-manager 영역
+- 기술 스택 질문 ("React? Vue?", "DB 뭐 쓸까요?") 절대 금지 — PRD는 비개발 층위(WHY/WHO/WHAT)만
 - 구현 방법 질문 ("어떻게 처리할까요?") 금지
 - 모호한 일반론 허용 금지 → 구체화 재질의
 
-### 3. 가정 검증 (Ambiguity 체크)
+### 3. PRD.md 파일 생성
 
-인터뷰 완료 후 초안을 아래 기준으로 점검:
-
-- "TBD", "미정", "모름", "나중에" 표현 카운트
-- 모호한 수식어 ("많은", "자주", "좋은") 카운트
-- Out of scope 항목 3개 이상인지
-- 가정이 명시되어 있는지
-
-**판정:**
-
-| 상태 | 기준 | 행동 |
-|------|------|------|
-| 명확 | TBD < 3, Out of scope ≥ 3 | 진행 |
-| 애매 | TBD 3-5개 | "이 부분 더 명확히 할까요?" 제안 |
-| 불충분 | TBD > 5 | 추가 인터뷰 라운드 권장 |
-
-### 4. PRD.md 파일 생성
-
-1. 템플릿(`templates/prd.md`) 기반으로 작성
+1. 인터뷰로 누적한 초안을 템플릿(`templates/prd.md`) 기반으로 PRD.md 파일에 작성
 2. `.claude/prd/PRD.md`로 저장 (기본). `.claude/prd/` 폴더가 없으면 생성.
-3. 여러 PRD 공존 시 `.claude/prd/PRD-<feature>.md` (사용자에게 물어봄)
+3. 여러 PRD 공존 시 AskUserQuestion으로 파일명 확인:
+   ```
+   AskUserQuestion(
+     question: "기존 PRD.md가 있어 여러 PRD가 공존하게 됩니다. 파일명은?",
+     header: "PRD 파일명",
+     options: [
+       {label: "PRD-<feature>.md", description: "feature명으로 별도 저장 (사용자가 feature명 입력)"},
+       {label: "기존 PRD.md 덮어쓰기", description: "기존 파일 교체"}
+     ]
+   )
+   ```
 4. 작성일에 실제 날짜 기입, 상태는 `Draft`
 
-### 5. 완료 판정
+### 4. 가정 검증 (Ambiguity 체크)
 
-PRD.md 생성 후 아래를 체크하고 사용자에게 보고:
+작성된 PRD.md를 `scripts/check_ambiguity.py`로 구조 검증:
 
-- [ ] 7개 섹션 모두 작성됨
-- [ ] "왜 지금인가"에 한 문장 이상 구체적 근거
-- [ ] "주 사용자"가 구체적 상황까지 기술됨
-- [ ] 유즈케이스 3개 이상, 서사 형식
-- [ ] 정량 지표 1개 이상
-- [ ] Out of scope 항목 3개 이상
-- [ ] 가정 3개 이상 명시
-- [ ] "TBD"/"미정" 표현 5개 미만
-- [ ] "화면 & 플로우"에 주요 화면 1개 이상 (UI 없으면 "해당 없음")
-
-### 6. (선택) examiner 검토
-
-1. 사용자에게 "examiner로 독립 검토할까요?" 물음
-2. 승인 시 examiner 에이전트 호출 — PRD.md를 대상으로 전달
-   - examiner는 독립 컨텍스트에서 논리적 허점, 빠진 전제, 실패 가능성 검토
-3. 결과를 `PRD.md` 하단에 "## 부록 C. 검토 의견" 섹션으로 추가
-
-**examiner 호출 예시:**
-```
-Agent(subagent_type="examiner")에게 PRD.md 전달
-→ "이 PRD의 논리적 허점, 빠진 전제, 실패 가능성을 검토해줘"
+```bash
+python ~/.claude/skills/prd-writer/scripts/check_ambiguity.py <PRD.md 경로>
 ```
 
-### 7. 다음 단계 안내
+스크립트가 7개 main 섹션 존재 + 필수 항목 수(유즈케이스 ≥3, 정량 지표 ≥1, Out of scope ≥3, 가정 ≥3, 주요 화면 ≥1) + TBD/미정 표현 카운트(참고)를 확인하고 판정을 반환한다.
 
-완료 메시지:
+- **명확** → 다음 단계 (examiner 검토)
+- **애매** (1-2개 미충족) → 미충족 항목을 보고하고 AskUserQuestion으로 보강 여부 확인:
+  ```
+  AskUserQuestion(
+    question: "다음 항목이 부족합니다: {미충족 항목 목록}. 보강할까요?",
+    header: "PRD 보강",
+    options: [
+      {label: "보강 인터뷰", description: "부족한 섹션만 추가 라운드 진행 후 PRD.md 업데이트 → 재검증"},
+      {label: "이대로 진행", description: "현재 상태로 examiner 검토 진행"},
+      {label: "취소", description: "PRD.md는 Draft로 남기고 종료"}
+    ]
+  )
+  ```
+- **불충분** (3개 이상 미충족) → 추가 인터뷰 라운드 권장
+
+### 5. examiner 검토 (필수)
+
+PRD.md 작성 완료 후 examiner 에이전트를 호출한다 (사용자 confirm 없이 자동):
+
 ```
-PRD.md가 생성되었습니다.
-다음 단계: /brief 실행 시 "PRD.md 참고해서"라고 힌트를 주면
-task-manager가 PRD를 참조해 PLAN.md를 작성합니다.
+Agent(
+  subagent_type: "examiner",
+  description: "PRD 검토",
+  prompt: "다음 PRD.md의 논리적 허점, 빠진 전제, 실패 가능성을 검토해줘.\n\n{PRD.md 전체}"
+)
 ```
+
+결과를 `PRD.md` 하단에 "## 부록 C. 검토 의견" 섹션으로 추가하고 사용자에게 그대로 전달한다.
 
 ---
-
-## /prd — 신규 PRD 작성
-
-사전 점검 → 선스캔 → 인터뷰 → 가정 검증 → 파일 생성 → 완료 판정 → examiner 제안 → 안내
-
-(위 행동 규칙 0~7 순서대로 실행)
 
 ## /prd-interview — 인터뷰만 재실행
 
 기존 PRD.md가 있을 때 특정 섹션만 보강:
 
 1. 기존 PRD.md 읽기
-2. 부족한 섹션 식별 (완료 판정 기준 미충족 항목)
+2. 부족한 섹션 식별 (`check_ambiguity.py`로 미충족 항목 추출)
 3. 해당 섹션에 대한 인터뷰만 진행
 4. PRD.md 업데이트
-
----
-
-## 인터뷰 스타일 (task-manager와의 차별)
-
-| 차원 | task-manager | prd-writer |
-|---|---|---|
-| 첫 질문 | "어떻게 구현할지 고민되는 부분은?" | "이걸 왜 지금 만드시나요?" |
-| 질문 대상 | 코드, 아키텍처, 통합 | 사람, 문제, 가정 |
-| 기대 답변 | 기술 스펙 | 서사, 맥락, 판단 근거 |
-| 성공 판정 | "구현 가능한 태스크로 쪼개지는가" | "비개발자에게 설명 가능한가" |
-
----
-
-<!-- 확장 계획 (이번엔 미구현)
-## 2단계: Light/Standard 모드 분기
-- 요청 분석 후 자동 판정 (다중 컴포넌트, 시스템 레벨, UI, 불확실성 중 2+ → Standard)
-- templates/tech-spec.md + references/mode-detection.md 추가
-
-## 3단계: Brownfield 지원
-- 기존 코드베이스 깊이 스캔, 도메인 용어/엔티티/API 패턴 추출
-- PRD에 "기존 맥락" 섹션 자동 생성
-- references/brownfield-scan.md 추가
--->
