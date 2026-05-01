@@ -45,11 +45,12 @@ Phase 2: 증거 기반 대조 (Evidence-Based Verification)
   → 증거 기록: 파일명:라인번호
 
 Phase 3: 변경 영향 리뷰 (Change Impact Review)
-  → git diff로 모든 변경사항 확인
+  → 메인 에이전트가 미리 저장한 .claude/gitdiff.txt를 Read하여 변경사항 확인
+  → 500줄 초과로 stat 요약만 있으면 변경 파일을 Read 도구로 직접 읽어 핀포인트
   → 요구사항과 무관한 변경, 디버그 코드, 기존 동작 영향 점검
 
 Phase 4: 잔여물 점검 (Residue Check)
-  → git diff의 변경된 코드만 대상
+  → .claude/gitdiff.txt의 변경된 코드만 대상
   → 자동 수정 대상: 디버그 코드 잔존(println, console.log), 미사용 import/변수
   → 이번 변경에서 새로 추가된 TODO만 대상 (기존 TODO는 건드리지 않음)
   → 보고만 (수정 안 함): 중복, 복잡도, 효율, 네이밍, 엣지케이스

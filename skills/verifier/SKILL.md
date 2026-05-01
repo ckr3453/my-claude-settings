@@ -3,6 +3,7 @@ name: verifier
 description: |
   구현 결과를 요구사항 대비 증거 기반으로 검증한다.
   3단계 파이프라인(기계적 게이트 → Verifier 증거 대조 → Adversary 반박 검증)을 서브에이전트로 실행하여 메인 에이전트의 확증 편향과 컨텍스트 오염을 방지한다.
+allowed-tools: ["Bash(bash *)", "Task", "AskUserQuestion"]
 ---
 
 # 검증자 (Verifier)
@@ -42,7 +43,7 @@ bash ~/.claude/skills/verifier/scripts/run-stage1.sh <프로젝트 루트>
 | 종료 코드 | 의미 | 메인 에이전트 행동 |
 |---|---|---|
 | 0 | PASS (빌드 + 테스트 통과) | Stage 2 진행. stdout 첫 줄을 Stage 2 프롬프트에 그대로 전달. |
-| 1 | FAIL | **즉시 중단**. stdout 전체를 사용자에게 그대로 보고. Stage 2/3 호출하지 않는다. 수정은 verifier의 책임이 아니다. |
+| 1 | FAIL | **즉시 중단**. stdout 전체를 호출자에게 보고. Stage 2/3 호출하지 않는다. 후속 행동(재시도/사용자 보고)은 호출자가 결정. |
 | 2 | SKIP (빌드 도구 미감지) | AskUserQuestion으로 진행 여부 확인 (아래 참조). |
 
 **SKIP 시 AskUserQuestion:**
@@ -72,6 +73,17 @@ AskUserQuestion(
 2. **프로젝트 루트 경로**
 3. **PLAN 경로** — `active/{로드맵}/PLAN.md`가 존재하면 경로 포함
 4. **Stage 1 결과** — `run-stage1.sh` stdout 첫 줄
+5. **변경사항 파일** — `.claude/gitdiff.txt`. 메인 에이전트가 Stage 2 진입 전에 미리 저장한다 (메인 컨텍스트에 diff 들어가는 것 방지):
+   ```bash
+   mkdir -p .claude
+   git diff HEAD > .claude/gitdiff.txt
+   LINES=$(wc -l < .claude/gitdiff.txt)
+   if [ "$LINES" -gt 500 ]; then
+     git diff HEAD --stat > .claude/gitdiff.txt
+     echo "---" >> .claude/gitdiff.txt
+     echo "위는 stat 요약. 변경 파일을 Read 도구로 직접 확인하라." >> .claude/gitdiff.txt
+   fi
+   ```
 
 ### 서브에이전트 생성
 
@@ -96,6 +108,9 @@ Agent(
 {run-stage1.sh stdout 첫 줄 — 예: "Stage 1 PASS — gradle (./gradlew test), 12s"}
 재실행하지 마세요.
 
+## 변경사항
+.claude/gitdiff.txt를 Read하여 변경사항을 확인하세요. 500줄 초과로 stat 요약만 있으면 변경 파일을 Read 도구로 직접 읽어 핀포인트하세요.
+
 ## 검증 프로토콜
 `~/.claude/skills/verifier/verifier-prompt.md`를 Read하고 거기 명시된 4단계 절차(요구사항 분해 → 증거 대조 → 변경 영향 → 잔여물 점검)와 보고 형식을 정확히 따르세요.
 
@@ -105,7 +120,7 @@ Agent(
 
 ### 결과 처리
 
-- **FAIL** → 즉시 중단. Verifier 보고서를 사용자에게 그대로 전달하고 멈춘다.
+- **FAIL** → 즉시 중단. Verifier 보고서를 호출자에게 반환. 후속 행동은 호출자가 결정.
 - **PASS** → Verifier 보고서를 보존하고 Stage 3으로 진행.
 
 ---
@@ -135,6 +150,9 @@ Agent(
 ## Verifier 보고서
 {Stage 2 Verifier의 전체 보고서를 여기에 붙여넣기}
 
+## 변경사항
+.claude/gitdiff.txt를 Read하여 변경사항을 직접 다시 확인하세요. 500줄 초과로 stat 요약만 있으면 변경 파일을 Read 도구로 직접 읽어 핀포인트하세요.
+
 ## 반박 프로토콜
 `~/.claude/skills/verifier/adversary-prompt.md`를 Read하고 거기 명시된 5가지 반박 관점(증거 재검증, 테스트 품질, 누락 요구사항, 변경 영향 재검토, 통합 관점)과 보고 형식을 정확히 따르세요.
 
@@ -144,7 +162,7 @@ Agent(
 
 ### 결과 처리
 
-- **Adversary가 FAIL 항목을 발견** → 전체 FAIL. 보고서를 사용자에게 그대로 전달하고 멈춘다.
+- **Adversary가 FAIL 항목을 발견** → 전체 FAIL. 보고서를 호출자에게 반환. 후속 행동은 호출자가 결정.
 - **Adversary가 반박 실패 (PASS 유지)** → 최종 PASS.
 
 ---
@@ -162,6 +180,6 @@ Agent(
 
 ## 금지 사항
 
-- 어느 Stage든 FAIL 시 메인 에이전트가 자동 수정을 시도하지 않는다 — 사용자에게 보고하고 멈춘다
+- verifier 자체는 자동 수정을 시도하지 않는다 — 검증과 보고만 담당. 재시도 정책은 호출자 영역.
 - 서브에이전트의 FAIL 판정을 메인 에이전트가 PASS로 뒤집지 않는다
 - 검증 결과를 요약하거나 긍정적으로 재해석하지 않는다
