@@ -1,10 +1,9 @@
 ---
 name: prd-writer
 description: |
-  제품/피처의 비개발적 틀(문제/유저/유즈케이스/가정/범위/지표)을 정의하는 PRD.md를 생성.
-  사용 시점: /prd로 신규 PRD 작성, /prd-interview로 인터뷰만 재실행,
-  "PRD 써줘", "요구사항 정리", "왜 만드는지 정리", "제품 스펙" 같은 요청 시 사용.
-  /brief 앞단에 위치하며, task-manager와는 PRD.md 파일로만 연결.
+  제품/피처의 비개발 층위(WHY/WHO/WHAT — 문제·유저·유즈케이스·가정·범위·지표)를 인터뷰 기반으로 정의해 .claude/prd/PRD.md를 생성한다.
+  task-manager는 직접 호출하지 않으며 PRD.md 파일로만 결합한다.
+  단순 버그 수정, 리팩토링, UI 없는 소규모 개선에는 사용하지 않는다.
 triggers: /prd, /prd-interview
 ---
 

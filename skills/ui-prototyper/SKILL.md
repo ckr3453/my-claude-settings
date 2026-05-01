@@ -1,11 +1,9 @@
 ---
 name: ui-prototyper
 description: |
-  PRD.md(또는 직접 입력)를 기반으로 정적 HTML 목업 variants를 생성하고 브라우저에서 확인.
-  사용 시점: /prototype으로 목업 생성, /prototype-iterate로 variant 개선,
-  /prototype-gallery로 갤러리 다시 열기,
-  "목업 만들어", "UI 확인", "화면 비교", "프로토타입" 같은 요청 시 사용.
-  prd-writer 이후 선택적으로 실행. UI 없는 피처에는 사용하지 않는다.
+  PRD.md 또는 사용자 직접 입력을 기반으로 서로 다른 접근의 정적 HTML 목업 3개(variants)를 생성하고 갤러리로 비교한다.
+  Tailwind CDN + 단일 HTML 파일 + 더미 데이터만 사용 (실 DB/API 접근 금지).
+  백엔드/인프라 등 UI 없는 피처, 디자인이 이미 확정된 경우에는 사용하지 않는다.
 triggers: /prototype, /prototype-iterate, /prototype-gallery
 ---
 
