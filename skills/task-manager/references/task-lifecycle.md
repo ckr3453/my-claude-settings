@@ -71,36 +71,23 @@ Task(
 - **완료 보고** → Stage 5(태스크 완료)로 진행
 - **막힘 보고** → 사용자에게 상황 보고 + 다음 행동 논의. (막힘 신호 정의는 `~/.claude/agents/implementer.md`의 "막히면 멈춘다" 섹션 참조)
 
-## 5. 태스크 완료
+## 5. 태스크 완료 후 처리
 
-implementer가 완료 보고를 하면, 사용자에게 verifier 진행 여부를 묻는다:
+implementer 완료 보고를 사용자에게 그대로 전달한다. 검증 진행 여부 / 재위임 / 다음 행동은 메인 에이전트(또는 사용자)가 결정한다 — **task-manager는 검증 단계에 직접 관여하지 않는다**.
 
-```
-AskUserQuestion(
-  question: "구현이 끝났습니다. verifier로 검증할까요?",
-  header: "검증 진행",
-  options: [
-    {label: "verifier 진행", description: "/verifier 호출 → 결과 받기"},
-    {label: "건너뛰기", description: "검증 없이 task_transition.py로 완료 처리 (권장 X)"},
-    {label: "취소", description: "여기서 멈춘다 — 사용자가 추가 작업"}
-  ]
-)
+(implementer 종료 시 hook이 메인 에이전트에게 검증 안내 메시지를 주입한다. task-manager는 그 흐름에 끼어들지 않는다.)
+
+검증이 완료되었거나 사용자가 "이 태스크 완료 처리"를 명시한 시점에 `task_transition.py`로 상태 전이:
+
+```bash
+python ~/.claude/skills/task-manager/scripts/task_transition.py <프로젝트 루트> --complete-only
 ```
 
-"verifier 진행" 선택 시 메인 에이전트가 `/verifier`를 호출하고 결과를 받는다.
-
-- **PASS** → `task_transition.py`로 상태 전이:
-   ```bash
-   python ~/.claude/skills/task-manager/scripts/task_transition.py <프로젝트 루트> --complete-only
-   ```
-   스크립트가 `in_progress/`의 태스크를 `completed/`로 이동하고 완료일을 파일 하단에 기록한다.
-- **FAIL** → /verifier 보고서를 사용자에게 그대로 전달하고 멈춘다. 메인 에이전트는 자동 재시도하지 않는다. 다음 행동(수정 후 재검증/태스크 분해/포기)은 사용자가 결정한다.
-
-"건너뛰기" 선택 시 verifier 호출 없이 바로 `task_transition.py --complete-only`로 완료 처리한다.
+스크립트가 `in_progress/`의 태스크를 `completed/`로 이동하고 완료일을 파일 하단에 기록한다.
 
 ## 6. 다음 태스크 시작 여부 확인
 
-PASS 후 `pending/`에 unblocked 태스크가 남아있으면, 자동으로 시작하지 않고 사용자에게 묻는다:
+태스크 완료 처리 후 `pending/`에 unblocked 태스크가 남아있으면, 자동으로 시작하지 않고 사용자에게 묻는다:
 
 ```
 AskUserQuestion(

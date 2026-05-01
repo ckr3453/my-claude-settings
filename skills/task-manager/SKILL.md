@@ -4,6 +4,7 @@ description: |
   .claude/tasks/ 디렉토리 기반으로 장기 프로젝트의 로드맵·태스크 상태를 추적한다.
   PLAN.md 작성, 태스크 파일 생성/분해, pending→in_progress→completed 폴더 이동으로 상태 전이, 진행률 집계, /brief 실행을 담당.
   1회성 단순 작업, 질문/조사, 독립 핫픽스에는 사용하지 않는다.
+allowed-tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash(python *)", "Task", "AskUserQuestion"]
 ---
 
 # 태스크 매니저
@@ -97,7 +98,7 @@ description: |
 | 스크립트 | 용도 | 호출 시점 |
 |---------|------|----------|
 | `init_project.py` | `.claude/tasks/{active,completed}/` 구조 초기화 | brief 결과가 `uninitialized`일 때 사용자 안내 |
-| `task_transition.py` | `in_progress/` → `completed/` 이동 + 다음 unblocked 태스크 → `in_progress/` | 태스크 완료(`/verifier` PASS) 시 |
+| `task_transition.py` | `in_progress/` → `completed/` 이동 + 다음 unblocked 태스크 → `in_progress/` | 사용자가 "태스크 완료 처리" 명시 시 |
 | `brief.py` | `.claude/tasks/` 상태 집계 (Glob 기반) → 케이스 + 로드맵별 진행률 반환 | `/brief` 호출 시 |
 
 ```bash
