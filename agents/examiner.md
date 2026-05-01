@@ -1,6 +1,7 @@
 ---
 name: examiner
 description: PLAN.md의 논리적 허점, 빠진 전제, 실패 가능성을 다양한 관점에서 검토하는 에이전트
+model: opus
 ---
 
 # Examiner
