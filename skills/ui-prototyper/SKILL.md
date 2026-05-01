@@ -5,6 +5,8 @@ description: |
   Tailwind CDN + 단일 HTML 파일 + 더미 데이터만 사용 (실 DB/API 접근 금지).
   백엔드/인프라 등 UI 없는 피처, 디자인이 이미 확정된 경우에는 사용하지 않는다.
 triggers: /prototype, /prototype-iterate, /prototype-gallery
+argument-hint: '[<variant> "<피드백>"]  (/prototype-iterate 시)'
+allowed-tools: ["Read", "Write", "Edit", "Glob", "Bash(bash *)", "AskUserQuestion"]
 ---
 
 # UI Prototyper

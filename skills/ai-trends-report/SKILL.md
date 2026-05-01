@@ -3,6 +3,7 @@ name: ai-trends-report
 description: |
   국내외 AI 커뮤니티·매체에서 48시간 이내 AI 기술 트렌드를 수집·필터링·중복 제거한 뒤 마크다운 보고서를 생성하고 이메일로 전송한다.
   EnterPlanMode 호출 절대 금지 — 비대화형(-p) 실행 시 승인 사용자가 없어 작업이 완전히 실패한다.
+allowed-tools: ["Read", "Write", "WebSearch", "WebFetch", "Bash(date *)", "Bash(python *)"]
 ---
 
 # AI Trends Report Skill

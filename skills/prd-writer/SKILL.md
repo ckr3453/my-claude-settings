@@ -4,6 +4,7 @@ description: |
   제품/피처의 비개발 층위(WHY/WHO/WHAT — 문제·유저·유즈케이스·가정·범위·지표)를 인터뷰 기반으로 정의해 .claude/prd/PRD.md를 생성한다.
   단순 버그 수정, 리팩토링, UI 없는 소규모 개선에는 사용하지 않는다.
 triggers: /prd, /prd-interview
+allowed-tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash(python *)", "Bash(git log *)", "Task", "AskUserQuestion"]
 ---
 
 # PRD Writer

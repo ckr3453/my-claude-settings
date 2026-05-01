@@ -3,6 +3,8 @@ name: tech-decision
 description: |
   Stack Overflow, Reddit, Hacker News, GeekNews 등 커뮤니티 의견을 수집해 최소 3개 옵션을 비교하는 근거 기반 의사결정 보고서를 생성한다.
   단순 사용법 질문이 아닌, 둘 이상의 기술/솔루션 중 선택이 필요한 의사결정 상황에서 사용한다.
+argument-hint: "[<후보 1> vs <후보 2> ...]"
+allowed-tools: ["Read", "Write", "WebSearch", "WebFetch", "AskUserQuestion"]
 ---
 
 # 기술 의사결정 지원

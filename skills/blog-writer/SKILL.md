@@ -4,6 +4,8 @@ description: |
   코딩 경험을 캐주얼 에세이 스타일의 기술 블로그 포스트(삽질기/의사결정기/TIL/회고)로 변환하고 Jekyll 파일까지 생성한다.
   두 가지 모드: git 이력 분석 기반과 인터뷰 기반.
   API 레퍼런스, 튜토리얼/가이드("~하세요" 체), 뉴스 형식 글에는 사용하지 않는다.
+argument-hint: "[<기간: 오늘|이번 주|지난달>]"
+allowed-tools: ["Read", "Write", "Edit", "Glob", "Bash(git *)", "AskUserQuestion"]
 ---
 
 # 블로그 라이터 (Blog Writer)
