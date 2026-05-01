@@ -7,17 +7,40 @@ description: |
 
 # 기술 의사결정 지원
 
-커뮤니티 실제 의견 기반으로 기술을 비교하고 추천합니다.
-
-## AI 행동 규칙 (반드시 준수)
+## AI 행동 규칙
 
 ### 1. 인터뷰 우선 원칙
-- **첫 단계는 항상 인터뷰**: `AskUserQuestion` 도구를 사용하여 체계적으로 정보 수집
-- **수집 항목**:
-  1. 의사결정 영역 (인프라/데이터베이스/프론트엔드/백엔드/기타)
-  2. 현재 상황 및 맥락
-  3. 제약사항 (예산, 팀 역량, 시간, 기존 스택)
-  4. 우선순위 (성능/개발속도/비용/학습곡선)
+
+첫 단계는 항상 인터뷰. **의사결정 영역**과 **우선순위**는 AskUserQuestion으로, **현재 상황·맥락·제약사항**은 자유 텍스트로 받는다.
+
+```
+AskUserQuestion(
+  questions: [
+    {
+      question: "의사결정 영역은?",
+      header: "영역",
+      options: [
+        {label: "인프라", description: "서버/클라우드/컨테이너"},
+        {label: "데이터베이스", description: "RDB/NoSQL/캐시"},
+        {label: "프론트엔드", description: "프레임워크/빌드 도구"},
+        {label: "백엔드", description: "프레임워크/언어"}
+      ]
+    },
+    {
+      question: "가장 중요한 우선순위는?",
+      header: "우선순위",
+      options: [
+        {label: "성능", description: "처리 속도/응답 시간"},
+        {label: "개발 속도", description: "빠른 구현/생산성"},
+        {label: "비용", description: "라이선스/인프라 비용"},
+        {label: "학습 곡선", description: "팀 학습 부담 최소화"}
+      ]
+    }
+  ]
+)
+```
+
+이후 자유 텍스트로 **현재 상황·맥락**과 **제약사항(예산, 팀 역량, 시간, 기존 스택)**을 받는다.
 
 ### 2. 커뮤니티 기반 의사결정
 - **커뮤니티 근거 우선**: 개인적 선호나 일반론만으로 추천하지 않음
@@ -51,27 +74,22 @@ description: |
 
 ### 워크플로우 1: 기술 선택 지원
 
-1. **인터뷰 시작**
+1. **인터뷰** — 위 "1. 인터뷰 우선 원칙" 절차대로 영역·우선순위·현황·제약 수집
+2. **커뮤니티 조사** — 최소 5개 소스에서 의견 수집:
    ```
-   사용자: /tech-decision
-   AI: AskUserQuestion으로 의사결정 영역, 현황, 제약사항 수집
-   ```
-
-2. **커뮤니티 조사** — 최소 5개 소스에서 의견 수집
-   ```
-   WebSearch("PostgreSQL vs MySQL 2024 site:stackoverflow.com")
+   WebSearch("PostgreSQL vs MySQL site:stackoverflow.com")
    WebSearch("PostgreSQL vs MySQL reddit r/programming")
    WebSearch("PostgreSQL vs MySQL site:news.ycombinator.com")
+   WebSearch("PostgreSQL vs MySQL latest best practices")
    WebFetch("https://news.hada.io/search?q=PostgreSQL", prompt="PostgreSQL 관련 최근 토론 요약")
    ```
-
-3. **분석 및 보고서 생성** — 보고서 구조에 따라 작성, 모든 추천에 커뮤니티 출처 포함
+3. **분석 및 보고서 생성** — `references/report-template.md`에 따라 작성, 모든 추천에 커뮤니티 출처 포함
 
 ### 워크플로우 2: 빠른 비교 (간소화)
 
-사용자가 이미 2-3개의 후보를 제시한 경우:
+사용자가 이미 2-3개의 후보를 제시한 경우 워크플로우 1을 단축한다:
 
-1. **제약사항만 확인**: AskUserQuestion으로 우선순위/제약사항만 수집
-2. **후보 기술 집중 조사**: 제시된 기술들만 웹 검색
-3. **비교표 생성**: 간단한 장단점 비교표 제공
+1. **인터뷰 단축** — 영역/우선순위는 사용자 메시지에서 추론, AskUserQuestion으로 우선순위만 확인 + 자유 텍스트로 제약사항 수집
+2. **후보 기술 집중 조사** — 제시된 기술들만 웹 검색 (워크플로우 1의 2단계와 동일 형식)
+3. **분석 및 보고서 생성** — 워크플로우 1의 3단계와 동일
 
