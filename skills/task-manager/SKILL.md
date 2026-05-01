@@ -8,12 +8,6 @@ description: |
 
 # 태스크 매니저
 
-**디렉토리 구조가 태스크 상태의 단일 진실 공급원(SSOT).**
-
-- `active/{로드맵}/pending/` — 대기 중
-- `active/{로드맵}/in_progress/` — 작업 중
-- `active/{로드맵}/completed/` — 완료
-
 ## 디렉토리 구조
 
 ```
@@ -32,21 +26,15 @@ description: |
             └── ...
 ```
 
-## 워크플로우 개요
+## 참조 파일
 
-- **새 로드맵** → 코드베이스 선스캔 → 인터뷰(모호함 해소까지) → PLAN.md 승인 → 태스크 파일 생성 → pending/ 이동
-- **태스크 시작** → in_progress/ 이동 → 접근 방식 확인 → **implementer 서브에이전트에 구현 위임** → `/verifier` 스킬로 검증 → completed/ 이동
-- **M/L 태스크** → 검증 체크리스트 제시 → 사용자 승인 필수 → 구현 위임
-
-**2단 구조**: 메인 세션은 대화·계획·검증·커밋을 담당하고, 실제 코드 변경은 `implementer` 서브에이전트가 수행한다. 이 분리로 메인 컨텍스트가 구현 디테일로 오염되는 것을 방지한다.
-
-상세 절차는 상황에 따라 아래 참조 파일을 Read한다:
+상황에 따라 아래 파일을 Read한다:
 
 | 상황 | 참조 파일 |
 |------|----------|
 | 새 로드맵 시작 (PLAN 인터뷰) | `references/plan-interview.md` |
 | 태스크 시작/완료/접근 방식 확인 | `references/task-lifecycle.md` |
-| `/brief`, 상태 확인, 브리핑 요청 | `references/brief-execution.md` |
+| `/brief` 호출 | `references/brief-execution.md` |
 
 ## PLAN.md 포맷
 
@@ -95,8 +83,6 @@ description: |
 - tree: src/.../관련디렉토리/
 ```
 
-상태 필드 없음. **파일이 어느 디렉토리에 있느냐 = 상태.**
-
 | 필드 | 설명 |
 |------|------|
 | phase | 소속 Phase 번호 |
@@ -106,23 +92,16 @@ description: |
 
 파일명: `{번호}-{설명}.md`, 독립 태스크: `ind-{번호}-{설명}.md`, 긴급: `urgent-{번호}-{설명}.md`
 
-## 병렬 실행
-
-| 조건 | 처리 |
-|------|------|
-| 독립 태스크 ≤ 2개 | 순차 (기본) |
-| 독립 태스크 ≥ 3개 + 모두 S/M + 파일 겹침 없음 | 경량 병렬 (Task run_in_background, 최대 3개) |
-| 사용자가 명시 요청 | 팀 병렬 (TeamCreate) |
-
-**의심스러우면 순차. TeamCreate는 사용자 요청 시에만.**
-
 ## 스크립트
 
-| 스크립트 | 용도 |
-|---------|------|
-| `init_project.py` | .claude/ 구조 초기화 |
-| `task_transition.py` | 태스크 완료 → 다음 시작 |
+| 스크립트 | 용도 | 호출 시점 |
+|---------|------|----------|
+| `init_project.py` | `.claude/tasks/{active,completed}/` 구조 초기화 | brief 결과가 `uninitialized`일 때 사용자 안내 |
+| `task_transition.py` | `in_progress/` → `completed/` 이동 + 다음 unblocked 태스크 → `in_progress/` | 태스크 완료(`/verifier` PASS) 시 |
+| `brief.py` | `.claude/tasks/` 상태 집계 (Glob 기반) → 케이스 + 로드맵별 진행률 반환 | `/brief` 호출 시 |
 
 ```bash
-python3 ~/.claude/skills/task-manager/scripts/init_project.py <project-root>
+python ~/.claude/skills/task-manager/scripts/brief.py <project-root>
+python ~/.claude/skills/task-manager/scripts/init_project.py <project-root>
+python ~/.claude/skills/task-manager/scripts/task_transition.py <project-root>
 ```
