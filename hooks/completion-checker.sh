@@ -78,9 +78,10 @@ done < "$CHANGED"
 LAYERS=""
 while IFS= read -r filepath; do
   for entry in "${LOCATIONS[@]}"; do
-    loc_pattern=$(echo "$entry" | cut -d'|' -f1 | xargs)
-    loc_label=$(echo "$entry" | cut -d'|' -f2 | xargs)
-    loc_focus=$(echo "$entry" | cut -d'|' -f3 | xargs)
+    loc_pattern="${entry%% |*}"
+    rest="${entry#* | }"
+    loc_label="${rest%% |*}"
+    loc_focus="${rest#* | }"
     if echo "$filepath" | grep -qE "$loc_pattern"; then
       LAYERS+="  [$loc_label] $filepath — 중점: $loc_focus\n"
       break
