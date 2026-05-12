@@ -98,11 +98,12 @@ rm -f "$CHANGED"
 rm -f /tmp/.claude-fail-${SESSION_ID}-* 2>/dev/null
 
 # ─── 결과 분기 ───
-if [ $ISSUE_COUNT -eq 0 ]; then
-  echo "[시스템 지시] /verifier로 요구사항 충족을 확인하세요." >&2
-elif [ $ISSUE_COUNT -gt 0 ]; then
+# verifier 지시는 post-task-verifier.sh가 implementer 종료 시점에만 강제한다.
+# Stop 훅은 빌드/린트/패턴 이슈가 있을 때만 메인 세션에 보고.
+if [ $ISSUE_COUNT -gt 0 ]; then
   echo -e "[검사 결과: ${ISSUE_COUNT}건]\n${REPORT}" >&2
-  echo "[시스템 지시] 위 이슈를 수정하세요. 수정 후 /verifier로 요구사항 충족을 확인하세요." >&2
+  echo "[시스템 지시] 위 이슈를 수정하세요." >&2
+  exit 2
 fi
 
-exit 2
+exit 0
