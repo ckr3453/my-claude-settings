@@ -64,8 +64,51 @@ allowed-tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash(python *)", "Bash
 - **가정 뒤집기**: "X는 당연히 ~다"에 "만약 그게 틀렸다면?" 던질 수 있다
 - 답이 모호하면 "정말 그런가요?" 재검증 가능
 - 답변을 받으면 내부적으로 해당 섹션에 초안 누적
+- **라운드 종료 시 Refine Gate 실행** (필수, 아래 "2.1 Refine Gate" 섹션 참조)
 - 사용자가 "충분해" / "진행해" / "됐어"라고 하면 종료
 - AI도 충분하다 판단하면 종료 제안 가능
+
+### 2.1 Refine Gate (라운드 종료 시 1회)
+
+각 라운드 마지막에 그 라운드의 모든 답변을 4필드로 구조화하고 사용자에게 누락/수정 확인을 받는다.
+
+**목적:** 답변에 묻혀있는 제약(Constraints)·범위 밖(Out of scope)을 드러내, 후속 examiner 검토와 PRD 저장 시 사용자 의도를 보존한다.
+
+**4필드 구조:**
+- **Decision**: 이 라운드에서 결정된 내용 (카테고리별 한 줄씩)
+- **Reasoning**: 사용자가 그렇게 결정한 이유 (답변에 명시됐을 때만; 추측 금지). 비어있으면 "(이유 미진술)"로 표기.
+- **Constraints**: 결정에 붙는 제약 (법적 요구, 도메인 한계, 외부 의존). 없으면 "(없음)".
+- **Out of scope**: 사용자가 명시적으로 범위 밖이라 한 항목. PRD에서 특히 중요. 없으면 "(없음)".
+
+**호출 형식:**
+
+```
+AskUserQuestion(
+  question: "이번 라운드 답변을 다음과 같이 정리했어요. 빠진 거 있나요?\n\nDecision: ...\nReasoning: ...\nConstraints: ...\nOut of scope: ...",
+  header: "라운드 정리",
+  options: [
+    {label: "그대로 진행", description: "이 4필드 그대로 PRD에 반영"},
+    {label: "Constraints 추가", description: "제약 조건 추가 입력"},
+    {label: "Out of scope 추가", description: "범위 밖 항목 추가 입력"},
+    {label: "다시 쓸래", description: "재구성 필요"}
+  ]
+)
+```
+
+> 4필드 본문은 `question`에 넣어 AskUserQuestion description 길이 한계를 피한다. `description`은 짧은 라벨만.
+
+**규칙:**
+
+- Refine Gate는 **답변 내부의 누락(Constraints/Out of scope)만** 본다. 전제 검증·실패 시나리오·대안 제시는 examiner 책임이므로 여기서 묻지 않는다.
+- "Constraints 추가" / "Out of scope 추가" 선택 시 두 번째 AskUserQuestion으로 누락 텍스트를 받는다.
+- "다시 쓸래" 선택 시 4필드를 새로 작성해 다시 확인한다. 무한 루프 방지를 위해 같은 라운드에서 2회까지만 재구성하고, 그래도 사용자가 거부하면 그 라운드의 답변을 원문 그대로 보존하고 다음 라운드로 진행한다.
+- Reasoning 필드는 *사용자가 직접 말한 이유만* 적는다. AI 추론 금지. 비어있으면 "(이유 미진술)"로 표기.
+
+**다층 방어:** Refine Gate는 *사용자 인지 보조* 1차 검출. examiner는 산출물 기반 *흐름 정합성* 2차 검출. 두 단계는 시점·정보·검출 방식이 다른 보완 관계 (중첩 아님).
+
+**Refine 결과 보존:** 라운드 종료 후 4필드는 대화 내부적으로 누적, 인터뷰 완료 시점에 PRD.md의 `### C. 인터뷰 정리` (라운드별 4필드 원본) 섹션에 그대로 박는다. 본문은 4필드를 자연스러운 서술로 PRD 해당 섹션에 반영.
+
+**부담 평가 (향후 결정):** Refine Gate 의무화로 인한 AskUserQuestion 호출 증가(라운드당 +1회, 보강 시 +2~3회, 최대 7라운드 = 최대 ~21회)는 2026-05-12 사용자 합의("써보고 불편하면 그때 바꾸자")에 따라 운영하며 평가한다. 부담 지표는 향후 결정.
 
 **금기:**
 
@@ -75,7 +118,7 @@ allowed-tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash(python *)", "Bash
 
 ### 3. PRD.md 파일 생성
 
-1. 인터뷰로 누적한 초안을 템플릿(`templates/prd.md`) 기반으로 PRD.md 파일에 작성
+1. 인터뷰로 누적한 초안을 템플릿(`templates/prd.md`) 기반으로 PRD.md 파일에 작성. 각 라운드의 Refine 4필드를 PRD 본문(1~7장)에 자연스러운 서술로 반영하고, 원본은 `### C. 인터뷰 정리`에 라운드별로 그대로 박는다.
 2. `.claude/prd/PRD.md`로 저장 (기본). `.claude/prd/` 폴더가 없으면 생성.
 3. 여러 PRD 공존 시 AskUserQuestion으로 파일명 확인:
    ```
@@ -127,7 +170,7 @@ Agent(
 )
 ```
 
-결과를 `PRD.md` 하단에 "## 부록 C. 검토 의견" 섹션으로 추가하고 사용자에게 그대로 전달한다.
+결과를 `PRD.md` 하단의 `## 부록`에 `### D. 검토 의견` 서브섹션으로 추가하고 사용자에게 그대로 전달한다.
 
 ---
 

@@ -59,6 +59,19 @@ allowed-tools: ["Read", "Write", "Edit", "Glob", "Grep", "Bash(python *)", "Task
 
 ## 범위 밖
 - ...
+
+---
+
+## 부록
+
+### A. 인터뷰 정리
+(인터뷰 라운드별 Refine Gate 4필드 원본. `references/plan-interview.md`의 Refine Gate 섹션 참조)
+
+#### 라운드 N: {카테고리명}
+- Decision: ...
+- Reasoning: ...        (사용자가 직접 말한 이유만. 없으면 "(이유 미진술)")
+- Constraints: ...      (없으면 "(없음)")
+- Out of scope: ...     (없으면 "(없음)")
 ```
 
 ## 태스크 파일 포맷

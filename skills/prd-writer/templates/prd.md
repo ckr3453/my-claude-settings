@@ -108,3 +108,15 @@
 
 ### B. 변경 이력
 - YYYY-MM-DD: 초안 작성
+
+### C. 인터뷰 정리
+(인터뷰 라운드별 Refine Gate 4필드 원본. `SKILL.md`의 Refine Gate 섹션 참조)
+
+#### 라운드 N: {카테고리명}
+- Decision: ...
+- Reasoning: ...        (사용자가 직접 말한 이유만. 없으면 "(이유 미진술)")
+- Constraints: ...      (없으면 "(없음)")
+- Out of scope: ...     (없으면 "(없음)")
+
+### D. 검토 의견
+(examiner 에이전트의 PRD 검토 결과. `SKILL.md`의 "5. examiner 검토" 단계에서 채워짐)
