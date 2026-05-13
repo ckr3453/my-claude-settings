@@ -1,10 +1,10 @@
 #!/bin/bash
 input=$(cat)
 node -e "
-const {execSync} = require('child_process');
+const {execFileSync} = require('child_process');
 const data = JSON.parse(process.argv[1]);
 const R = '\x1b[0m', DIM = '\x1b[90m', CYAN = '\x1b[36m', MAG = '\x1b[35m';
-const W = '\x1b[97m', GRN = '\x1b[32m', YEL = '\x1b[33m', RED = '\x1b[31m', BOLD = '\x1b[1m';
+const W = '\x1b[97m', GRN = '\x1b[32m', YEL = '\x1b[33m', RED = '\x1b[31m', BOLD = '\x1b[1m', BLU = '\x1b[94m';
 const sep = ' ' + DIM + '|' + R + ' ';
 const parts = [];
 
@@ -14,8 +14,7 @@ if (dir) parts.push('\uD83D\uDCC2 ' + CYAN + dir + R);
 let branch = '';
 if (dir) {
   try {
-    const gitDir = dir.replace(/\\\\/g, '/').replace(/^([A-Za-z]):/, '/\$1');
-    branch = execSync('git -C "' + gitDir + '" branch --show-current 2>/dev/null', {encoding:'utf8'}).trim();
+    branch = execFileSync('git', ['-C', dir, 'branch', '--show-current'], {encoding:'utf8', stdio:['ignore','pipe','ignore']}).trim();
   } catch {}
 }
 parts.push('\uD83C\uDF3F ' + (branch ? MAG + branch : DIM + 'no branch') + R);
@@ -40,7 +39,7 @@ if (dur != null) {
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
   const t = h > 0 ? h + 'h ' + m + 'm' : m + 'm';
-  parts.push('\u23F1 ' + DIM + t + R);
+  parts.push('\u23F1 ' + BLU + t + R);
 }
 
 process.stdout.write(parts.join(sep));
