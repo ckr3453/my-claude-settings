@@ -125,6 +125,22 @@ Claude가 작업을 마치고 멈추면 `completion-checker`가 자동 실행됩
 
 어느 단계든 FAIL이면 전체 FAIL. 3단계 모두 통과 시 PASS → 자동 커밋.
 
+## 셀프체크
+
+운영 결함을 자동 검출하는 doctor 스크립트가 포함되어 있습니다.
+
+```bash
+bash bin/doctor.sh
+```
+
+검사 항목:
+1. **dual-path sync** — `~/.claude/` ↔ repo 간 hooks/agents/skills/statusline/settings 동기화
+2. **SKILL.md references 무결성** — SKILL.md가 가리키는 `references/*.md`의 실재 여부
+3. **hook 외부 명령 가용성** — `jq`/`git`/`bash` 등이 PATH에 있는지
+4. **fragile 패턴 regression** — 과거 제거된 macOS-위험 패턴(raw `timeout` 등)이 다시 들어왔는지
+
+`FAIL` 1건 이상이면 exit 1로 종료합니다.
+
 ## 사용법
 
 ### 설치
