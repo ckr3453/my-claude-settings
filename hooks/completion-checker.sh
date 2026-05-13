@@ -1,5 +1,6 @@
 #!/bin/bash
-# Stop: 변경 파일 종합 검사 + 리포트
+# Stop: 변경 파일 위생 검사 + 리포트
+# 빌드/테스트는 /verifier Stage 1이 담당. 이 hook은 변경 파일의 코드 위생 패턴만 빠르게 검사한다.
 
 INPUT=$(cat)
 CWD=$(echo "$INPUT" | jq -r '.cwd // empty' 2>/dev/null)
@@ -13,51 +14,14 @@ CHANGED="/tmp/.claude-changed-${SESSION_ID:-$$}"
 source ~/.claude/hooks/config.sh
 _load_config "$CWD"
 
-# ─── 빌드 명령 자동 감지 ───
-BUILD_CMD=""
-LINT_CMD=""
-
-# commands.sh에서 먼저 시도
-COMMANDS_FILE="$CWD/.claude/hooks/commands.sh"
-if [ -f "$COMMANDS_FILE" ]; then
-  BUILD_CMD=$(grep -m1 '^BUILD_CMD=' "$COMMANDS_FILE" | cut -d= -f2- | tr -d '"' | tr -d "'")
-  LINT_CMD=$(grep -m1 '^LINT_CMD=' "$COMMANDS_FILE" | cut -d= -f2- | tr -d '"' | tr -d "'")
-fi
-
-# commands.sh에 없으면 빌드 도구 자동 감지
-if [ -z "$BUILD_CMD" ]; then
-  if [ -f "$CWD/gradlew" ]; then
-    BUILD_CMD="./gradlew build -x test 2>&1"
-  elif [ -f "$CWD/pom.xml" ]; then
-    BUILD_CMD="mvn compile -q 2>&1"
-  elif [ -f "$CWD/package.json" ]; then
-    BUILD_CMD="npm run build --if-present 2>&1"
-  fi
-fi
-
 REPORT=""
 ISSUE_COUNT=0
 
-# ─── 빌드/린트 실행 ───
-if [ -n "$BUILD_CMD" ]; then
-  build_out=$(cd "$CWD" && timeout 20 bash -c "$BUILD_CMD" 2>&1)
-  if [ $? -ne 0 ]; then
-    REPORT+="[빌드 실패]\n$build_out\n\n"
-    ((ISSUE_COUNT++))
-  fi
-fi
-if [ -n "$LINT_CMD" ]; then
-  lint_out=$(cd "$CWD" && timeout 20 bash -c "$LINT_CMD" 2>&1)
-  if [ $? -ne 0 ]; then
-    REPORT+="[린트 경고]\n$lint_out\n\n"
-    ((ISSUE_COUNT++))
-  fi
-fi
-
-# ─── WARNING_PATTERNS 검사 (변경 파일만) ───
+# ─── WARNING_PATTERNS 검사 (변경 파일만, .md 등은 SKIP_EXTENSIONS로 제외) ───
 WARNINGS=""
 while IFS= read -r filepath; do
   [ -f "$filepath" ] || continue
+  _should_skip "$filepath" && continue
   for entry in "${WARNING_PATTERNS[@]}"; do
     pattern="${entry%% |*}"
     desc="${entry##*| }"
@@ -98,8 +62,7 @@ rm -f "$CHANGED"
 rm -f /tmp/.claude-fail-${SESSION_ID}-* 2>/dev/null
 
 # ─── 결과 분기 ───
-# verifier 지시는 post-task-verifier.sh가 implementer 종료 시점에만 강제한다.
-# Stop 훅은 빌드/린트/패턴 이슈가 있을 때만 메인 세션에 보고.
+# 빌드/테스트는 /verifier Stage 1이 담당. 이 hook은 위생 이슈만 보고.
 if [ $ISSUE_COUNT -gt 0 ]; then
   echo -e "[검사 결과: ${ISSUE_COUNT}건]\n${REPORT}" >&2
   echo "[시스템 지시] 위 이슈를 수정하세요." >&2
